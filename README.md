@@ -7,15 +7,15 @@
 </div>
 
 # 整体架构
-RiskParix/
-├── backend/                 # 后端服务
-├── frontend/                # 前端界面
-├── data_processing/         # 数据处理模块
-├── strategy_engine/         # 策略引擎
-├── execution_system/        # 交易执行系统
-├── config/                  # 配置文件
-├── docs/                    # 文档
-└── scripts/                 # 辅助脚本
+RiskParix/ <br>
+├── backend/                 # 后端服务 <br>
+├── frontend/                # 前端界面 <br>
+├── data_processing/         # 数据处理模块 <br>
+├── strategy_engine/         # 策略引擎 <br>
+├── execution_system/        # 交易执行系统 <br>
+├── config/                  # 配置文件 <br>
+├── docs/                    # 文档 <br>
+└── scripts/                 # 辅助脚本 <br>
 
 # 数据平面
 ## 数据分析模块
