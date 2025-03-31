@@ -32,7 +32,7 @@ RiskParix/ <br>
 │           ├── realtime.py   # 实时数据处理 <br>
 │           └── historical.py # 历史数据计算 <br>
 ├── frontend/                 # 前端界面（React/Next.js） <br>
-├── strategy_engine/          # 策略引擎（风险平价核心） <br>
+├── strategy_engine/          # 策略引擎（风险平价核心）（待定） <br>
 │   ├── risk_parity/          # 风险平价算法 <br>
 │   ├── dynamic_control/      # 动态调仓逻辑 <br>
 │   └── ... <br>
