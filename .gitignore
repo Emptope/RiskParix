@@ -1,0 +1,9 @@
+# 忽略数据文件
+data_processing/raw_data/
+*.csv
+*.pkl
+
+# 忽略环境文件
+.env
+venv/
+
