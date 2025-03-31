@@ -44,7 +44,7 @@ build/                # 构建产物
 *.pem                 # 证书文件
 *.csv                 # 数据文件
 *.jsonl               # 大JSON数据文件
-data/                # 原始数据目录
+data/                 # 原始数据目录
 
 # ==============================
 # 数据库/缓存文件
@@ -70,3 +70,4 @@ junit.xml             # JUnit 测试报告
 !.vscode/extensions.json # 保留推荐的VSCode插件
 !.vscode/launch.json  # 保留调试配置
 
+data/
