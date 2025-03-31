@@ -1,3 +1,22 @@
+<div align="center">
+
+# RiskParix
+
+#### Trade the risk.
+
+</div>
+
+# 整体架构
+RiskParix/
+├── backend/                 # 后端服务
+├── frontend/                # 前端界面
+├── data_processing/         # 数据处理模块
+├── strategy_engine/         # 策略引擎
+├── execution_system/        # 交易执行系统
+├── config/                  # 配置文件
+├── docs/                    # 文档
+└── scripts/                 # 辅助脚本
+
 # 数据平面
 ## 数据分析模块
 ## 基础参数
