@@ -2,7 +2,7 @@
 
 # RiskParix
 
-#### Trade the risk.
+#### Trade with the risk.
 
 </div>
 
