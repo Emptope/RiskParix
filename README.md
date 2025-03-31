@@ -6,16 +6,47 @@
 
 </div>
 
-# 整体架构
-RiskParix/ <br>
-├── backend/                 # 后端服务 <br>
-├── frontend/                # 前端界面 <br>
-├── data_processing/         # 数据处理模块 <br>
-├── strategy_engine/         # 策略引擎 <br>
-├── execution_system/        # 交易执行系统 <br>
-├── config/                  # 配置文件 <br>
-├── docs/                    # 文档 <br>
-└── scripts/                 # 辅助脚本 <br>
+RiskParix/
+├── backend/                  # 后端核心 <br>
+│   ├── control_plane/        # 控制平面 <br>
+│   │   ├── EMS/              # 交易执行管理系统 <br>
+│   │   │   ├── broker_connectors/  # 券商接口（东方财富EMT等） <br>
+│   │   │   ├── order_executor.py   # 订单执行逻辑 <br>
+│   │   │   ├── simulator.py        # 模拟交易模块 <br>
+│   │   │   └── ...
+│   │   │
+│   │   └── OMS/              # 订单管理系统 <br>
+│   │       ├── order_manager.py    # 订单生命周期管理 <br>
+│   │       ├── risk_checker.py     # 风控检查 <br>
+│   │       └── ...
+│   │
+│   └── data_plane/           # 数据平面 <br>
+│       ├── analytics/        # 分析模块（实现20个基础参数） <br>
+│       │   ├── risk_metrics.py     # 风险指标计算 <br>
+│       │   ├── performance.py      # 收益指标计算 <br>
+│       │   └── ...
+│       │
+│       ├── storage/          # 数据存储 <br>
+│       │   ├── mysql_client.py     # 关系型数据 <br>
+│       │   └── influxdb_client.py  # 时序数据 <br>
+│       │
+│       └── pipelines/        # 数据处理流水线 <br>
+│           ├── realtime.py   # 实时数据处理 <br>
+│           └── historical.py # 历史数据计算 <br>
+│
+├── frontend/                 # 前端界面（React/Next.js） <br>
+├── strategy_engine/          # 策略引擎（风险平价核心） <br>
+│   ├── risk_parity/          # 风险平价算法 <br>
+│   ├── dynamic_control/      # 动态调仓逻辑 <br>
+│   └── ...
+├── config/                   # 配置文件 <br>
+│   ├── broker.yaml           # 券商账户配置 <br>
+│   └── risk_parameters.yaml  # 风控阈值 <br>
+├── data/                     # 原始数据（被.gitignore忽略） <br>
+├── docs/                     # 文档
+└── scripts/                  # 辅助脚本 <br>
+    ├── deploy.sh             # 部署脚本 <br>
+    └── data_sync.sh          # 数据同步脚本 <br>
 
 # 数据平面
 ## 数据分析模块
