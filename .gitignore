@@ -57,3 +57,5 @@ junit.xml             # JUnit 测试报告
 
 # 数据路径
 data/
+venv/
+.idea/
