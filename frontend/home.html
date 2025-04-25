@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>RiskParix</title>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        background: #131722;
+        color: #d1d4dc;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        min-height: 100vh;
+      }
+      /* 扇形图容器 */
+      #pie-chart {
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: conic-gradient(#26a69a 0% 30%, #ef5350 30% 100%);
+        margin: 20px auto;
+        position: relative;
+      }
+      /* 筛选面板 */
+      .filter-panel {
+        padding: 20px;
+        border-right: 1px solid #2a2e39;
+      }
+      /* 股票表格 */
+      .stock-table {
+        padding: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #2a2e39;
+      }
+      .buy-signal {
+        color: #26a69a;
+      }
+      .sell-signal {
+        color: #ef5350;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 左侧扇形图及筛选 -->
+    <div class="filter-panel">
+      <h2 style="font-size: 24px; color: #2196f3">持仓推荐</h2>
+      <div id="pie-chart"></div>
+      <div>
+        <h3>筛选条件</h3>
+        <div>
+          <label
+            >最小收益率:
+            <input type="range" id="yield" min="0" max="50" value="10" />
+            <span id="yieldValue">10%</span>
+          </label>
+        </div>
+        <div>
+          <label
+            >风险等级:
+            <select id="risk">
+              <option value="1">低风险</option>
+              <option value="2">中风险</option>
+              <option value="3">高风险</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧主内容 -->
+    <div class="stock-table">
+      <h1 style="font-size: 48px; margin: 0 0 20px">股票分析</h1>
+      <table id="stockTable">
+        <thead>
+          <tr>
+            <th>代码</th>
+            <th>名称</th>
+            <th>收益率</th>
+            <th>风险</th>
+            <th>信号</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 数据由JS动态生成 -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      // 模拟股票数据
+      const stocks = [
+        {
+          code: "SH600519",
+          name: "贵州茅台",
+          yield: 28,
+          risk: 1,
+          price: 1850,
+          ma5: 1800,
+          ma20: 1750,
+        },
+        {
+          code: "SZ300750",
+          name: "宁德时代",
+          yield: 15,
+          risk: 2,
+          price: 210,
+          ma5: 205,
+          ma20: 198,
+        },
+        {
+          code: "SH601012",
+          name: "隆基股份",
+          yield: 9,
+          risk: 3,
+          price: 45,
+          ma5: 48,
+          ma20: 42,
+        },
+      ];
+
+      // 动态生成表格
+      function renderTable() {
+        const tbody = document.querySelector("#stockTable tbody");
+        tbody.innerHTML = stocks
+          .map(
+            (stock) => `
+        <tr>
+            <td>${stock.code}</td>
+            <td>${stock.name}</td>
+            <td>${stock.yield}%</td>
+            <td>${["★", "★★", "★★★"][stock.risk - 1]}</td>
+            <td class="${
+              getSignal(stock).includes("买入") ? "buy-signal" : "sell-signal"
+            }">
+                ${getSignal(stock)}
+            </td>
+        </tr>
+    `
+          )
+          .join("");
+      }
+
+      // 技术信号判断（MACD策略）[9,10](@ref)
+      function getSignal(stock) {
+        const maDiff = stock.price - (stock.ma5 + stock.ma20) / 2;
+        return maDiff > 0 ? "买入信号 ▲" : "卖出信号 ▼";
+      }
+
+      // 初始化
+      document.getElementById("yield").addEventListener("input", function (e) {
+        document.getElementById("yieldValue").textContent =
+          e.target.value + "%";
+        // 这里可添加筛选逻辑
+      });
+
+      // 首次渲染
+      renderTable();
+
+      // 扇形图动态数据（示例买入30%，卖出70%）
+      document.getElementById("pie-chart").style.background =
+        "conic-gradient(#26a69a 0% 30%, #ef5350 30% 100%)";
+    </script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+/* 信号样式 */
+.buy-signal {
+    @apply bg-green-50 text-green-800;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.sell-signal {
+    @apply bg-red-50 text-red-800;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.hold-signal {
+    @apply bg-blue-50 text-blue-800;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* 表格样式 */
+table {
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+}
+
+/* 加载动画 */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
