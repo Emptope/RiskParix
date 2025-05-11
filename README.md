@@ -9,41 +9,12 @@
 # 整体架构
 
 RiskParix/ <br>
-├── backend/                  # 后端核心 <br>
-│   ├── control_plane/        # 控制平面 <br>
-│   │   ├── EMS/              # 交易执行管理系统 <br>
-│   │   │   ├── broker_connectors/  # 券商接口（东方财富EMT等） <br>
-│   │   │   ├── order_executor.py   # 订单执行逻辑 <br>
-│   │   │   ├── simulator.py        # 模拟交易模块 <br>
-│   │   │   └── ... <br>
-│   │   └── OMS/              # 订单管理系统 <br>
-│   │       ├── order_manager.py    # 订单生命周期管理 <br>
-│   │       ├── risk_checker.py     # 风控检查 <br>
-│   │       └── ... <br>
-│   └── data_plane/           # 数据平面 <br>
-│       ├── analytics/        # 分析模块（实现20个基础参数） <br>
-│       │   ├── risk_metrics.py     # 风险指标计算 <br>
-│       │   ├── performance.py      # 收益指标计算 <br>
-│       │   └── ... <br>
-│       ├── storage/          # 数据存储 <br>
-│       │   ├── mysql_client.py     # 关系型数据 <br>
-│       │   └── influxdb_client.py  # 时序数据 <br>
-│       └── pipelines/        # 数据处理流水线 <br>
-│           ├── realtime.py   # 实时数据处理 <br>
-│           └── historical.py # 历史数据计算 <br>
-├── frontend/                 # 前端界面（React/Next.js） <br>
-├── strategy_engine/          # 策略引擎（风险平价核心）（待定） <br>
-│   ├── risk_parity/          # 风险平价算法 <br>
-│   ├── dynamic_control/      # 动态调仓逻辑 <br>
-│   └── ... <br>
-├── config/                   # 配置文件 <br>
-│   ├── broker.yaml           # 券商账户配置 <br>
-│   └── risk_parameters.yaml  # 风控阈值 <br>
-├── data/                     # 原始数据（被.gitignore忽略） <br>
-├── docs/                     # 文档 <br>
-└── scripts/                  # 辅助脚本 <br>
-    ├── deploy.sh             # 部署脚本 <br>
-    └── data_sync.sh          # 数据同步脚本 <br>
+
+- script: 处理后端数据
+- frontend: 绘制前端面板
+   - home.py: 主面板
+   - detail.py: 个股展示面板
+   - strategy.py: 策略选择面板
 
 # 数据平面
 
@@ -90,40 +61,6 @@ RiskParix/ <br>
 计算：如RSI、MACD等，帮助判断超买超卖情况。
 20. 基本面指标
 计算：如ROE、ROA等，评估公司的盈利能力。
-
-## 基础参数层（单资产维度）
-1. 风险调整后收益指标
-   1. 条件夏普比率：使用半衰期衰减因子（λ=0.94）计算动态波动率
-   2. Omega比率：优于夏普的尾部敏感指标
-   3. Calmar比率：年化收益/最大回撤
-2. 极端风险指标
-   1. CVaR（条件风险价值）：计算99%置信度下的尾部平均损失
-   2. 崩溃相关性：市场暴跌期间（如VIX>40时）与基准指数的相关性
-   3. 流动性黑洞指标：用Amihud Illiquidity Ratio：ILLIQ = |r_t| / (成交量×价格)
-3. 时序结构参数
-   1. Hurst指数：通过R/S分析判断趋势持续性（H>0.5适用动量策略）
-   2. 波动率聚焦系数：用GARCH(1,1)模型中的α+β值度量
-   3. 收益自相关性：滞后1-5天的自相关系数矩阵
-
-## 组合优化层（多资产维度）
-1. 风险平价核心参数
-   1. 边际风险贡献度
-   2. 风险预算弹性：各资产风险贡献偏离目标值的容忍区间（±15%）
-   3. 协方差矩阵稳定性：用Ledoit-Wolf收缩估计替代样本协方差
-2. 非线性依赖关系
-   1. Copula函数参数：用t-Copula拟合资产间尾部相关性
-   2. 联合下行概率
-   3. 最大覆盖矩形：寻找N维空间中回撤最小的超立方体区域
-
-## 动态控制层（时间维度）
-1. 状态切换参数
-   1. 隐马尔可夫模型（HMM）：识别市场Regime的转移概率矩阵
-   2. 波动率regime阈值：通过EVT（极值理论）确定高低波动状态分界点
-   3. 动量衰减因子：计算12个月动量与3个月动量的发散度
-2. 自适应再平衡参数
-   1. 交易摩擦敏感度：考虑滑点和冲击成本的再平衡阈值
-   2. 路径依赖权重：用重要性抽样（Importance Sampling）降低黑天鹅路径影响
-   3. 期权隐含参数：从VIX期限结构提取市场预期作为约束条件
 
 # 控制平面
 
