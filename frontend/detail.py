@@ -9,16 +9,18 @@ from matplotlib import rcParams
 
 # 全局设置中文字体
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体显示中文
-plt.rcParams['axes.unicode_minus'] = False    # 解决负号显示问题
+plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 mpf.__version__
 
 class StockDetailPage:
     def __init__(self, root, stock_code):
         self.root = root
-        self.stock_code = stock_code
+        self.stock_code = "sh.600028"
+
         # 数据路径
-        self.kline_path = os.path.join("data", "day_klines", "sz50_klines.csv")
-        self.metrics_path = os.path.join("data", "data_analysis", "all_metrics.csv")
+        self.kline_path = os.path.join("../data", "day_klines", "sz50_klines.csv")
+        self.metrics_path = os.path.join("../data", "data_analysis", "all_metrics.csv")
+
         self.display_detail()
 
     def display_detail(self):
@@ -51,13 +53,13 @@ class StockDetailPage:
         # 右侧图表控制面板
         control_frame = tk.Frame(right_frame, bg="white")
         control_frame.pack(fill="x", pady=5)
-        
+
         # 周期选择下拉框
         tk.Label(control_frame, text="K线周期:", bg="white").pack(side="left")
         self.period_var = tk.StringVar(value="日K")
         periods = ["日K", "周K", "月K", "季K", "年K"]
         period_combo = ttk.Combobox(
-            control_frame, 
+            control_frame,
             textvariable=self.period_var,
             values=periods,
             state="readonly",
@@ -72,17 +74,20 @@ class StockDetailPage:
 
         # 初始绘图
         if not self.df_k.empty:
+            print(1)
             self.plot_kline()
         else:
-            tk.Label(self.chart_frame, text="无有效K线数据", font=("Arial", 12)).pack()
-        
+            tk.Label(self.chart_frame, text="未找到有效K线数据",
+                     # font=("Arial", 12)
+                    ).pack()
+
         # 返回主页按钮
         return_button = tk.Button(
             bottom_frame,
             text="返回主页",
-            font=("Microsoft YaHei", 12),
+            # font=("Microsoft YaHei", 12),
             bg="#4CAF50",  # 绿色背景
-            fg="white",    # 白色文字
+            fg="white",  # 白色文字
             command=self.return_to_home
         )
         return_button.pack(side="right", padx=10, pady=5)  # 靠右对齐
@@ -115,63 +120,79 @@ class StockDetailPage:
 
     def setup_info_panel(self, parent):
         """设置左侧信息面板"""
-        # 基本信息框架
-        info_frame = tk.LabelFrame(parent, text="股票信息", bg="#f0f0f0", font=("Microsoft YaHei", 12))
-        info_frame.pack(padx=10, pady=10, fill="x")
+        # 估值信息框
+        valuation_frame = tk.LabelFrame(parent, text="估值信息", bg="white", font=("Microsoft YaHei", 12))
+        valuation_frame.pack(padx=10, pady=10, fill="x")
 
-        tk.Label(info_frame, text=f"股票代码: {self.stock_code}",
-                 bg="#f0f0f0", font=("Microsoft YaHei", 11), anchor="w").pack(fill="x")
+        tk.Label(valuation_frame, text="FCFE估值:", bg="white", font=("Microsoft YaHei", 11), anchor="w").pack(fill="x",
+                                                                                                               pady=2)
+        self.fcfe_entry = tk.Entry(valuation_frame, font=("Microsoft YaHei", 11))
+        self.fcfe_entry.pack(fill="x", padx=5, pady=2)
 
-        if not self.df_k.empty:
-            latest = self.df_k.iloc[-1]
-            tk.Label(info_frame, text=f"最新价格: {latest['close']:.2f}",
-                     bg="#f0f0f0", font=("Microsoft YaHei", 11), anchor="w").pack(fill="x")
-            tk.Label(info_frame, text=f"成交量: {latest['volume']/10000:.2f}万手",
-                     bg="#f0f0f0", font=("Microsoft YaHei", 11), anchor="w").pack(fill="x")
-        else:
-            tk.Label(info_frame, text="无日线数据", bg="#f0f0f0", font=("Microsoft YaHei", 11), anchor="w").pack(fill="x")
+        tk.Label(valuation_frame, text="FCFF估值:", bg="white", font=("Microsoft YaHei", 11), anchor="w").pack(fill="x",
+                                                                                                               pady=2)
+        self.fcff_entry = tk.Entry(valuation_frame, font=("Microsoft YaHei", 11))
+        self.fcff_entry.pack(fill="x", padx=5, pady=2)
 
-        # 指标框架
-        metrics_frame = tk.LabelFrame(parent, text="指标分析", bg="#f0f0f0", font=("Microsoft YaHei", 12))
-        metrics_frame.pack(padx=10, pady=10, fill="x")
+        # 金融参数框
+        financial_frame = tk.LabelFrame(parent, text="金融参数", bg="white", font=("Microsoft YaHei", 12))
+        financial_frame.pack(padx=10, pady=10, fill="x")
 
-        if not self.df_m.empty:
-            # 取最新年份指标
-            latest_m = self.df_m.sort_values('year').iloc[-1]
-            
-            # 安全格式化函数
-            def safe_format(value, default="N/A", fmt=".2f"):
-                try:
-                    if pd.isna(value):
-                        return default
-                    return f"{float(value):{fmt}}"
-                except (ValueError, TypeError):
-                    return str(value)
-            
-            metrics = [
-                ("年化收益率", latest_m.get('annualized_return'), "%", "衡量投资平均年收益"),
-                ("最大回撤", latest_m.get('max_drawdown'), "%", "投资期间最大亏损幅度"),
-                ("夏普比率", latest_m.get('sharpe_ratio'), "", "风险调整后收益(>1为佳)"),
-                ("索提诺比率", latest_m.get('sortino_ratio'), "", "下行风险调整收益"),
-                ("胜率", latest_m.get('win_rate'), "%", "盈利交易比例")
-            ]
-            
-            for name, value, unit, desc in metrics:
-                frame = tk.Frame(metrics_frame, bg="#f0f0f0")
-                frame.pack(fill="x", pady=2)
-                val_str = safe_format(value) + unit
-                tk.Label(frame, text=f"{name}: {val_str}", bg="#f0f0f0", 
-                         font=("Microsoft YaHei", 11), anchor="w", width=15).pack(side="left")
-                tk.Label(frame, text=desc, bg="#f0f0f0", 
-                         font=("Microsoft YaHei", 9), fg="#666666", anchor="w").pack(side="left", fill="x", expand=True)
-        else:
-            tk.Label(metrics_frame, text="无指标数据", bg="#f0f0f0", font=("Microsoft YaHei", 11)).pack()
+        params = [("年化收益率", "annualized_return"), ("最大回撤", "max_drawdown"), ("夏普比率", "sharpe_ratio")]
+        self.param_entries = {}
+        for label, key in params:
+            tk.Label(financial_frame, text=f"{label}:", bg="white", font=("Microsoft YaHei", 11), anchor="w").pack(
+                fill="x", pady=2)
+            entry = tk.Entry(financial_frame, font=("Microsoft YaHei", 11))
+            entry.pack(fill="x", padx=5, pady=2)
+            self.param_entries[key] = entry
+
+        # 相关股票框
+        related_frame = tk.LabelFrame(parent, text="相关股票", bg="white", font=("Microsoft YaHei", 12))
+        related_frame.pack(padx=10, pady=10, fill="x")
+
+        tk.Label(related_frame, text="选择评估依据:", bg="white", font=("Microsoft YaHei", 11), anchor="w").pack(
+            fill="x", pady=2)
+        self.criteria_var = tk.StringVar(value="市盈率")
+        criteria_combo = ttk.Combobox(
+            related_frame,
+            textvariable=self.criteria_var,
+            values=["估值关联性", "金融参数关联性", "行业关联性"],
+            state="readonly",
+            font=("Microsoft YaHei", 11)
+        )
+        criteria_combo.pack(fill="x", padx=5, pady=2)
+
+        tk.Label(related_frame, text="相关股票列表:", bg="white", font=("Microsoft YaHei", 11), anchor="w").pack(
+            fill="x", pady=2)
+        self.stock_listbox = tk.Listbox(related_frame, font=("Microsoft YaHei", 11), height=5)
+        self.stock_listbox.pack(fill="x", padx=5, pady=2)
+        for stock in ["sh.600028", "sh.600519", "sh.601318", "sh.601398"]:
+            self.stock_listbox.insert(tk.END, stock)
+
+        # 添加编辑按钮
+        edit_button = tk.Button(
+            related_frame,
+            text="编辑股票列表",
+            font=("Microsoft YaHei", 11),
+            bg="#4CAF50",
+            fg="white",
+            command=self.edit_stock_list
+        )
+        edit_button.pack(pady=5)
+
+    def edit_stock_list(self):
+        """编辑股票列表"""
+        new_stock = tk.simpledialog.askstring("编辑股票", "请输入新的股票代码:")
+        if new_stock:
+            self.stock_listbox.insert(tk.END, new_stock)
+
 
     def plot_kline(self):
         """绘制K线图"""
         # 清空之前图表
-        for widget in self.chart_frame.winfo_children():
-            widget.destroy()
+        # for widget in self.chart_frame.winfo_children():
+        #     widget.destroy()
 
         if self.df_k.empty:
             tk.Label(self.chart_frame, text="无有效K线数据", font=("Microsoft YaHei", 12)).pack()
@@ -199,7 +220,7 @@ class StockDetailPage:
         # 设置mplfinance中文显示
         mc = mpf.make_marketcolors(up='r', down='g', inherit=True)
         s = mpf.make_mpf_style(base_mpf_style='yahoo', marketcolors=mc, rc={
-            'font.family': 'SimHei',
+            # 'font.family': 'SimHei',
             'axes.unicode_minus': False
         })
 
@@ -212,7 +233,7 @@ class StockDetailPage:
             style=s,
             returnfig=True,
             figsize=(10, 7),
-            title=f"{self.stock_code} - {period} K线图",
+            title=f"K lines",
             ylabel='价格',
             ylabel_lower='成交量',
             datetime_format='%Y-%m-%d',
@@ -222,11 +243,11 @@ class StockDetailPage:
         # 嵌入Tkinter
         canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
         canvas.draw()
-        
+
         # 添加工具栏
         toolbar = NavigationToolbar2Tk(canvas, self.chart_frame)
         toolbar.update()
-        
+
         # 布局
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
