@@ -4,7 +4,6 @@ import tkinter as tk
 from tkinter import ttk
 from strategy import StrategyPage
 
-
 class HomePage:
     def __init__(self, root):
         self.root = root
@@ -154,7 +153,7 @@ class HomePage:
 
     def load_stock_data(self, stock_table):
         try:
-            with open(self.details_path, "r") as file:
+            with open(self.details_path, "r", encoding="utf-8-sig") as file:
                 reader = csv.reader(file)
                 next(reader)
                 for row in reader:

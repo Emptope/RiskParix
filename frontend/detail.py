@@ -1,16 +1,120 @@
 import os
 import pandas as pd
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, scrolledtext
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import mplfinance as mpf
 from matplotlib import rcParams
+import requests
+import threading
+import json
 
 # 全局设置中文字体
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体显示中文
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 mpf.__version__
+
+# ========== DeepSeek 客户端 ==========
+class DeepSeekClient:
+    def __init__(self, api_key=None, stock_id=None, model='deepseek-chat'):
+        self.base_url = "https://api.deepseek.com/v1"
+        self.model = model
+        self.api_key = api_key
+        self.stock_id = stock_id
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        self.kline_path = os.path.join("data", "day_klines", "sz50_klines.csv")
+        self.metrics_path = os.path.join("data", "data_analysis", "all_metrics.csv")
+
+    def get_system_prompt(self):
+        system_prompt = (
+            "你是一名专注于股票技术指标和K线图分析的市场专家。"
+            f"{'当前分析标的：' + self.stock_id if self.stock_id else '[未指定具体股票]'}\n"
+            "分析K线数据时请包含以下要素：\n"
+            "1. 趋势分析（短期、中期、长期）\n"
+            "2. 关键支撑位和阻力位\n"
+            "3. 成交量分析\n"
+            "4. 常见形态分析（头肩顶/底、双顶/底等）\n"
+            "5. 关键技术指标（MACD、RSI、布林带等）\n\n"
+            f"可用数据路径：\n"
+            f"- K线数据：{self.kline_path}\n"
+            f"- 指标数据：{self.metrics_path}\n"
+            "请提供清晰、专业的分析报告，包含可操作的见解。"
+        )
+        return {"role": "system", "content": system_prompt}
+
+    def chat(self, message, history=None):
+        # 初始化消息，包含系统提示
+        messages = [self.get_system_prompt()]
+        
+        # 添加历史对话记录（如果存在）
+        if history:
+            messages.extend(history)
+            
+        # 添加当前用户消息
+        messages.append({"role": "user", "content": message})
+        
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False
+        }
+        
+        try:
+            response = requests.post(f"{self.base_url}/chat/completions", 
+                                    headers=self.headers, 
+                                    json=payload)
+            response.raise_for_status()
+            return response.json()['choices'][0]['message']['content']
+        except requests.RequestException as e:
+            return f"[请求失败] {str(e)}"
+        except (KeyError, json.JSONDecodeError) as e:
+            return f"[响应解析失败] {str(e)}"
+
+# ========== Tkinter 聊天框 ==========
+class ChatBox(tk.Frame):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.configure(width=400, bg='white', bd=2, relief=tk.GROOVE)
+        self.pack_propagate(0)
+
+        self.chat_display = scrolledtext.ScrolledText(self, wrap=tk.WORD, state='disabled', bg='#f5f5f5')
+        self.chat_display.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.entry_frame = tk.Frame(self)
+        self.entry_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+
+        self.user_input = tk.Entry(self.entry_frame)
+        self.user_input.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self.user_input.bind("<Return>", self.send_message)
+
+        self.send_button = tk.Button(self.entry_frame, text="发送", command=self.send_message)
+        self.send_button.pack(side=tk.RIGHT)
+
+        self.history = []
+        self.client = DeepSeekClient(api_key="sk-9db9e88186f14721b11b70c8c791b1d7", stock_id="sh.600028")
+
+    def send_message(self, event=None):
+        message = self.user_input.get().strip()
+        if message:
+            self.display_message("用户", message)
+            self.history.append({"role": "user", "content": message})
+            self.user_input.delete(0, tk.END)
+            threading.Thread(target=self.query_deepseek, args=(message,)).start()
+
+    def query_deepseek(self, message):
+        response = self.client.chat(message, history=self.history[:-1])
+        self.history.append({"role": "assistant", "content": response})
+        self.after(0, lambda: self.display_message("助手", response))
+
+    def display_message(self, sender, message):
+        self.chat_display.configure(state='normal')
+        self.chat_display.insert(tk.END, f"{sender}: {message}\n")
+        self.chat_display.configure(state='disabled')
+        self.chat_display.see(tk.END)
 
 class StockDetailPage:
     def __init__(self, root, stock_code):
@@ -18,8 +122,8 @@ class StockDetailPage:
         self.stock_code = "sh.600028"
 
         # 数据路径
-        self.kline_path = os.path.join("../data", "day_klines", "sz50_klines.csv")
-        self.metrics_path = os.path.join("../data", "data_analysis", "all_metrics.csv")
+        self.kline_path = os.path.join("data", "day_klines", "sz50_klines.csv")
+        self.metrics_path = os.path.join("data", "data_analysis", "all_metrics.csv")
 
         self.display_detail()
 
@@ -36,9 +140,13 @@ class StockDetailPage:
         left_frame = tk.Frame(main_frame, bg="#f0f0f0", width=350)
         left_frame.pack(side="left", fill="y", padx=5, pady=5)
 
-        # 右侧图表面板
-        right_frame = tk.Frame(main_frame, bg="white")
-        right_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        # 中间图表面板
+        center_frame = tk.Frame(main_frame, bg="white")
+        center_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+
+        # 右侧聊天面板
+        right_frame = tk.Frame(main_frame, bg="white", width=400)
+        right_frame.pack(side="left", fill="y", padx=5, pady=5)
 
         # 底部按钮面板
         bottom_frame = tk.Frame(self.root, bg="#f0f0f0", height=40)
@@ -50,8 +158,8 @@ class StockDetailPage:
         # 左侧信息展示
         self.setup_info_panel(left_frame)
 
-        # 右侧图表控制面板
-        control_frame = tk.Frame(right_frame, bg="white")
+        # 中间图表控制面板
+        control_frame = tk.Frame(center_frame, bg="white")
         control_frame.pack(fill="x", pady=5)
 
         # 周期选择下拉框
@@ -69,7 +177,7 @@ class StockDetailPage:
         period_combo.bind("<<ComboboxSelected>>", lambda e: self.plot_kline())
 
         # 图表容器
-        self.chart_frame = tk.Frame(right_frame, bg="white")
+        self.chart_frame = tk.Frame(center_frame, bg="white")
         self.chart_frame.pack(fill="both", expand=True)
 
         # 初始绘图
@@ -77,20 +185,21 @@ class StockDetailPage:
             print(1)
             self.plot_kline()
         else:
-            tk.Label(self.chart_frame, text="未找到有效K线数据",
-                     # font=("Arial", 12)
-                    ).pack()
+            tk.Label(self.chart_frame, text="未找到有效K线数据").pack()
+
+        # 添加聊天框到右侧面板
+        self.chat_box = ChatBox(right_frame)
+        self.chat_box.pack(fill="both", expand=True)
 
         # 返回主页按钮
         return_button = tk.Button(
             bottom_frame,
             text="返回主页",
-            # font=("Microsoft YaHei", 12),
-            bg="#4CAF50",  # 绿色背景
-            fg="white",  # 白色文字
+            bg="#4CAF50",
+            fg="white",
             command=self.return_to_home
         )
-        return_button.pack(side="right", padx=10, pady=5)  # 靠右对齐
+        return_button.pack(side="right", padx=10, pady=5)
 
     def load_data(self):
         """加载股票数据"""
@@ -187,12 +296,11 @@ class StockDetailPage:
         if new_stock:
             self.stock_listbox.insert(tk.END, new_stock)
 
-
     def plot_kline(self):
         """绘制K线图"""
         # 清空之前图表
-        # for widget in self.chart_frame.winfo_children():
-        #     widget.destroy()
+        for widget in self.chart_frame.winfo_children():
+            widget.destroy()
 
         if self.df_k.empty:
             tk.Label(self.chart_frame, text="无有效K线数据", font=("Microsoft YaHei", 12)).pack()
@@ -220,7 +328,6 @@ class StockDetailPage:
         # 设置mplfinance中文显示
         mc = mpf.make_marketcolors(up='r', down='g', inherit=True)
         s = mpf.make_mpf_style(base_mpf_style='yahoo', marketcolors=mc, rc={
-            # 'font.family': 'SimHei',
             'axes.unicode_minus': False
         })
 
