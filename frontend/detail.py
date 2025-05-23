@@ -234,7 +234,7 @@ class StockDetailPage:
             style=s,
             returnfig=True,
             figsize=(14, 9),
-            title=f"{self.stock_code} K线图",
+            title= "K线图",
             ylabel='价格',
             datetime_format='%Y-%m-%d',
             warn_too_much_data=10000
