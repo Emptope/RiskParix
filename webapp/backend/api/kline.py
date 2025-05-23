@@ -1,39 +1,46 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-import pandas as pd
+import duckdb
 import os
 
 router = APIRouter()
 
-KLINE_CSV_PATH = os.path.join("data", "day_klines", "all_klines.csv")
+KLINE_PATH = os.path.join("data", "day_klines", "all_klines.parquet")
+
+def normalize_code(code: str) -> str:
+    code = code.upper().replace("-", "").replace(".", "")
+    if code.startswith("SH"):
+        return f"sh.{code[2:]}"
+    elif code.startswith("SZ"):
+        return f"sz.{code[2:]}"
+    elif code.endswith("SH"):
+        return f"sh.{code[:-2]}"
+    elif code.endswith("SZ"):
+        return f"sz.{code[:-2]}"
+    else:
+        return f"{'sh' if code.startswith('6') else 'sz'}.{code}"
 
 @router.get("/kline/{code}")
 async def get_kline(code: str):
     """
-    获取股票 K 线图数据，自动识别并转换股票代码格式。
-    支持形式：600221, SH600221, 600221.SH, sz000001
+    获取股票 K 线图数据，支持多种股票代码格式。
     """
     try:
-        df = pd.read_csv(KLINE_CSV_PATH, encoding="utf-8-sig")
+        norm_code = normalize_code(code)
 
-        code = code.upper().replace("-", "").replace(".", "")
-        if code.startswith("SH"):
-            norm_code = f"sh.{code[2:]}"
-        elif code.startswith("SZ"):
-            norm_code = f"sz.{code[2:]}"
-        elif code.endswith("SH"):
-            norm_code = f"sh.{code[:-2]}"
-        elif code.endswith("SZ"):
-            norm_code = f"sz.{code[:-2]}"
-        else:
-            norm_code = f"{'sh' if code.startswith('6') else 'sz'}.{code}"
+        con = duckdb.connect()
+        query = f"""
+        SELECT date, open, close, high, low
+        FROM read_parquet('{KLINE_PATH}')
+        WHERE code = '{norm_code}'
+        """
+        result = con.execute(query).fetchdf()
+        con.close()
 
-        if norm_code not in df["code"].values:
+        if result.empty:
             return JSONResponse({"error": f"未找到股票代码: {norm_code}"}, status_code=404)
 
-        filtered = df[df["code"] == norm_code].copy()
-        result = filtered[["date", "open", "close", "high", "low"]].dropna()
-
+        # 构造返回值
         kline_data = [
             {
                 "date": row["date"],
@@ -46,5 +53,6 @@ async def get_kline(code: str):
         ]
 
         return kline_data
+
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

@@ -244,15 +244,6 @@ export default function Detail() {
         </div>
       </div>
 
-      {/* 底部返回按钮 */}
-      <div className="border-t p-4 text-right">
-        <button
-          onClick={() => navigate('/')}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          返回主页
-        </button>
-      </div>
     </div>
   );
 }
