@@ -12,10 +12,6 @@ class HomePage:
         self.details_path = os.path.join("data", "data_analysis", "details.csv")
 
         self.create_nav_bar()
-
-        self.content_frame = tk.Frame(self.root, bg="#f9f9f9")
-        self.content_frame.pack(fill="both", expand=True)
-
         self.display_home()
 
     def create_nav_bar(self):
@@ -173,9 +169,6 @@ class HomePage:
             stock_table.insert("", "end", values=("股票数据文件未找到", "", "", "", "", "", "", ""))
 
     def display_strategy(self):
-        for widget in self.root.winfo_children():
-            if isinstance(widget, tk.Frame) and widget != self.root.children['!frame']:
-                widget.destroy()
         StrategyPage(self.root)
 
     def open_stock_detail(self, stock_name):
