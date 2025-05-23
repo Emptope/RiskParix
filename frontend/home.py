@@ -8,11 +8,14 @@ class HomePage:
     def __init__(self, root):
         self.root = root
         self.root.title("Homepage")
-        self.root.geometry("800x600")
-        self.create_nav_bar()
-        # 数据路径
+        self.root.geometry("1000x600")
         self.details_path = os.path.join("data", "data_analysis", "details.csv")
-        print(self.details_path)
+
+        self.create_nav_bar()
+
+        self.content_frame = tk.Frame(self.root, bg="#f9f9f9")
+        self.content_frame.pack(fill="both", expand=True)
+
         self.display_home()
 
     def create_nav_bar(self):
@@ -25,17 +28,19 @@ class HomePage:
         style.map("TButton", background=[("active", "#f0f0f0")])
 
         ttk.Button(nav_bar, text="主页", style="TButton", command=self.display_home).pack(side="left", padx=20, pady=10)
-        ttk.Button(nav_bar, text="策略选择页面", style="TButton", command=self.display_strategy).pack(side="left",
-                                                                                                      padx=20, pady=10)
+        ttk.Button(nav_bar, text="策略分析页面", style="TButton", command=self.display_strategy).pack(side="left", padx=20, pady=10)
 
     def display_home(self):
-        # 清空现有内容（保留导航栏）
         for widget in self.root.winfo_children():
-            # 更安全的方式检查导航栏
             if isinstance(widget, tk.Frame) and not hasattr(widget, '_is_nav_bar'):
                 widget.destroy()
 
-        # 左侧：服务列表
+        self.create_service_list()
+        self.create_filter_frame()
+        self.create_stock_table()
+        self.load_stock_data(self.stock_table)
+
+    def create_service_list(self):
         service_frame = tk.Frame(self.root, bg="#e8e8e8", width=200)
         service_frame.pack(side="left", fill="y")
         tk.Label(service_frame, text="服务列表", bg="#e8e8e8", font=("Arial", 14)).pack(pady=10)
@@ -45,135 +50,127 @@ class HomePage:
             service_list.insert(tk.END, service)
         service_list.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # 中间：筛选列表
+    def create_filter_frame(self):
         filter_frame = tk.Frame(self.root, bg="#f9f9f9", width=400)
         filter_frame.pack(side="left", fill="y", padx=10)
         tk.Label(filter_frame, text="筛选列表", bg="#f9f9f9", font=("Arial", 14)).pack(pady=10)
 
-        # 年份选择
         tk.Label(filter_frame, text="年份", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
-        year_options = [str(year) for year in range(2014, 2025)]  # Example range of years
-        year_combobox = ttk.Combobox(filter_frame, values=year_options, font=("Arial", 12), state="readonly")
-        year_combobox.pack(fill="x", padx=10, pady=5)
-        year_combobox.set("选择年份")  # Default placeholder text
+        year_options = [str(year) for year in range(2014, 2025)]
+        self.year_combobox = ttk.Combobox(filter_frame, values=year_options, font=("Arial", 12), state="readonly")
+        self.year_combobox.pack(fill="x", padx=10, pady=5)
+        self.year_combobox.set("选择年份")
 
-        # 年化收益率
         tk.Label(filter_frame, text="年化收益率", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
-        annual_return = tk.Scale(filter_frame, from_=0, to=50, orient="horizontal", bg="#f9f9f9")
-        annual_return.pack(fill="x", padx=10)
+        self.annual_return = tk.Scale(filter_frame, from_=0, to=50, orient="horizontal", bg="#f9f9f9")
+        self.annual_return.pack(fill="x", padx=10)
 
-        # 最大回撤
         tk.Label(filter_frame, text="最大回撤", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
-        max_drawdown = tk.Scale(filter_frame, from_=0, to=100, orient="horizontal", bg="#f9f9f9")
-        max_drawdown.pack(fill="x", padx=10)
+        self.max_drawdown = tk.Scale(filter_frame, from_=0, to=100, orient="horizontal", bg="#f9f9f9")
+        self.max_drawdown.pack(fill="x", padx=10)
 
-        # 索提娜比率
-        tk.Label(filter_frame, text="索提娜比率", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
-        sortino_ratio = tk.Scale(filter_frame, from_=0, to=5, resolution=0.1, orient="horizontal", bg="#f9f9f9")
-        sortino_ratio.pack(fill="x", padx=10)
+        tk.Label(filter_frame, text="市盈率 TTM", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
+        self.pe_ratio = tk.Scale(filter_frame, from_=0, to=100, resolution=1, orient="horizontal", bg="#f9f9f9")
+        self.pe_ratio.pack(fill="x", padx=10)
 
-        # 夏普比率
+        tk.Label(filter_frame, text="市净率 MRQ", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
+        self.pb_ratio = tk.Scale(filter_frame, from_=0, to=10, resolution=0.1, orient="horizontal", bg="#f9f9f9")
+        self.pb_ratio.pack(fill="x", padx=10)
+
         tk.Label(filter_frame, text="夏普比率", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
-        sharpe_ratio = tk.Scale(filter_frame, from_=0, to=5, resolution=0.1, orient="horizontal", bg="#f9f9f9")
-        sharpe_ratio.pack(fill="x", padx=10)
+        self.sharpe_ratio = tk.Scale(filter_frame, from_=0, to=5, resolution=0.1, orient="horizontal", bg="#f9f9f9")
+        self.sharpe_ratio.pack(fill="x", padx=10)
 
-        # 龙头股
-        tk.Label(filter_frame, text="龙头股", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
-        leading_stock = ttk.Combobox(filter_frame, values=["是", "否"], font=("Arial", 12))
-        leading_stock.pack(fill="x", padx=10, pady=5)
+        tk.Button(filter_frame, text="筛选", command=self.apply_filters, font=("Arial", 12), bg="#0596B7", fg="white").pack(pady=20, padx=10, fill="x")
 
-        # 行业
-        tk.Label(filter_frame, text="行业", bg="#f9f9f9", font=("Arial", 12)).pack(anchor="w", padx=10)
-        industry = ttk.Combobox(filter_frame, values=["A农林牧渔","B采矿业","C制造业",
-                "D电力热力燃气及水生产和供应业",
-                "E建筑业",
-                "F批发和零售业",
-                "G交通运输仓储和邮政业",
-                "H住宿和餐饮业",
-                "I信息传输软件和信息技术服务业",
-                "J金融业",
-                "K房地产业",
-                "L租赁和商务服务业",
-                "M科学研究和技术服务业",
-                "N水利环境和公共设施管理业",
-                "O居民服务修理和其他服务业",
-                "P教育",
-                "Q卫生和社会工作",
-                "R文化体育和娱乐业",
-                "S公共管理社会保障和社会组织",
-                "T国际组织"], font=("Arial", 12))
-        industry.pack(fill="x", padx=10, pady=5)
-
-        # 右侧：股票列表
-        stock_frame = tk.Frame(self.root, bg="#ffffff", width=400)
+    def create_stock_table(self):
+        stock_frame = tk.Frame(self.root, bg="#ffffff", width=600)
         stock_frame.pack(side="left", fill="both", expand=True)
         tk.Label(stock_frame, text="股票列表", bg="#ffffff", font=("Arial", 14)).pack(pady=10)
 
-        # 创建包含列表和滚动条的框架
-        list_container = tk.Frame(stock_frame)
-        list_container.pack(padx=10, pady=10, fill="both", expand=True)
+        columns = ("code", "name", "year", "annual_return", "max_drawdown", "pe_ratio", "pb_ratio", "sharpe_ratio")
+        self.stock_table = ttk.Treeview(stock_frame, columns=columns, show="headings", height=20)
+        self.stock_table.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # 创建垂直滚动条
-        scrollbar = tk.Scrollbar(list_container)
-        scrollbar.pack(side="right", fill="y")
+        headers = [
+            ("code", "证券代码"),
+            ("name", "证券名称"),
+            ("year", "年份"),
+            ("annual_return", "年涨跌幅"),
+            ("max_drawdown", "最大回撤"),
+            ("pe_ratio", "市盈率"),
+            ("pb_ratio", "市净率"),
+            ("sharpe_ratio", "夏普比率")
+        ]
+        for col, title in headers:
+            self.stock_table.heading(col, text=title)
+            self.stock_table.column(col, width=80, anchor="center")
 
-        # 创建股票列表并关联滚动条
-        stock_list = tk.Listbox(
-            list_container,
-            font=("Arial", 12),
-            yscrollcommand=scrollbar.set
-        )
-        stock_list.pack(side="left", fill="both", expand=True)
+    def apply_filters(self):
+        filter_data = {
+            "年份": self.year_combobox.get(),
+            "年化收益率": self.annual_return.get(),
+            "最大回撤": self.max_drawdown.get(),
+            "市盈率": self.pe_ratio.get(),
+            "市净率": self.pb_ratio.get(),
+            "夏普比率": self.sharpe_ratio.get()
+        }
 
-        # 配置滚动条
-        scrollbar.config(command=stock_list.yview)
-        # Create Treeview for stock data
-        columns = ("code", "name", "annual_return", "max_drawdown", "sharpe_ratio")
-        stock_table = ttk.Treeview(stock_frame, columns=columns, show="headings", height=20)
-        stock_table.pack(fill="both", expand=True, padx=10, pady=10)
+        for item in self.stock_table.get_children():
+            self.stock_table.delete(item)
 
-        # Define column headers
-        stock_table.heading("code", text="证券代码")
-        stock_table.heading("name", text="证券名称")
-        stock_table.heading("annual_return", text="年化收益率")
-        stock_table.heading("max_drawdown", text="最大回撤")
-        stock_table.heading("sharpe_ratio", text="夏普比率")
+        self.load_stock_data(self.stock_table, filter_data)
 
-        # Set column widths
-        stock_table.column("code", width=100, anchor="center")
-        stock_table.column("name", width=100, anchor="center")
-        stock_table.column("annual_return", width=100, anchor="center")
-        stock_table.column("max_drawdown", width=100, anchor="center")
-        # stock_table.column("sortino_ratio", width=100, anchor="center")
-        stock_table.column("sharpe_ratio", width=100, anchor="center")
-
-        # Load stock data into the table
-        self.load_stock_data(stock_table)
-        # 加载股票数据
-
-    def load_stock_data(self, stock_table):
+    def load_stock_data(self, stock_table, filters=None):
         try:
             with open(self.details_path, "r", encoding="utf-8-sig") as file:
                 reader = csv.reader(file)
                 next(reader)
-                for row in reader:
-                    stock_table.bind("<Double-Button-1>",
-                                     lambda event: self.open_stock_detail(
-                                         stock_table.item(stock_table.selection())['values'][0]))
 
-                    if row[2] == "2024-12-31":  # Only process rows for the year 2024
-                        annual_return = float(row[3])  # Convert to percentage
-                        if annual_return > 10:  # Filter stocks with annual return > 10%
-                            formatted_row = [
-                                row[0],  # Stock code
-                                row[1],
-                                f"{annual_return:.2f}%",  # Annual return
-                                f"{float(row[6]):.2f}%",  # Maximum drawdown
-                                f"{float(row[7]):.2f}",  # Sharpe ratio
-                            ]
-                            stock_table.insert("", "end", values=formatted_row)
+                for row in reader:
+                    try:
+                        stock_code = row[0]
+                        stock_name = row[1]
+                        year = row[2]
+                        annual_return = float(row[3])
+                        pe_ratio = float(row[4])
+                        pb_ratio = float(row[5])
+                        max_drawdown = float(row[6])
+                        sharpe = float(row[7])
+
+                        if filters:
+                            if filters["年份"] != "选择年份" and filters["年份"] not in year:
+                                continue
+                            if annual_return < filters["年化收益率"]:
+                                continue
+                            if max_drawdown < -filters["最大回撤"]:
+                                continue
+                            if pe_ratio < filters["市盈率"]:
+                                continue
+                            if pb_ratio < filters["市净率"]:
+                                continue
+                            if sharpe < filters["夏普比率"]:
+                                continue
+
+                        formatted_row = [
+                            stock_code,
+                            stock_name,
+                            year,
+                            f"{annual_return:.2f}%",
+                            f"{max_drawdown:.2f}%",
+                            f"{pe_ratio:.2f}",
+                            f"{pb_ratio:.2f}",
+                            f"{sharpe:.2f}"
+                        ]
+                        stock_table.insert("", "end", values=formatted_row)
+                    except ValueError:
+                        continue
+
+                stock_table.bind("<Double-Button-1>", lambda event: self.open_stock_detail(
+                    stock_table.item(stock_table.selection())['values'][0]))
+
         except FileNotFoundError:
-            stock_table.insert("", "end", values=("股票数据文件未找到", "", "", "", ""))
+            stock_table.insert("", "end", values=("股票数据文件未找到", "", "", "", "", "", "", ""))
 
     def display_strategy(self):
         for widget in self.root.winfo_children():
@@ -184,7 +181,6 @@ class HomePage:
     def open_stock_detail(self, stock_name):
         from detail import StockDetailPage
         StockDetailPage(self.root, stock_name)
-
 
 if __name__ == "__main__":
     root = tk.Tk()
