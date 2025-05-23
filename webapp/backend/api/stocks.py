@@ -1,11 +1,12 @@
 from fastapi import APIRouter
-import pandas as pd
+import duckdb
 import os
 
 router = APIRouter()
 
-@router.get("/stocks") 
+@router.get("/stocks")
 def get_stocks():
-    path = os.path.join("data", "data_analysis", "details.csv")
-    df = pd.read_csv(path)
+    path = os.path.join("data", "data_analysis", "details.parquet")
+    query = f"SELECT * FROM '{path}'"
+    df = duckdb.query(query).to_df()
     return df.to_dict(orient="records")

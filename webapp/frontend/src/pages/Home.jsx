@@ -100,14 +100,14 @@ export default function Home() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">证券代码</th>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">证券名称</th>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">年份</th>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">年涨跌幅</th>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">最大回撤</th>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">市盈率</th>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">市净率</th>
-                  <th className="px-4 py-2 text-center text-white font-medium text-gray-600 uppercase">夏普比率</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">证券代码</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">证券名称</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">年份</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">年涨跌幅</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">最大回撤</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">市盈率</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">市净率</th>
+                  <th className="px-4 py-2 text-center text-white font-medium uppercase">夏普比率</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">

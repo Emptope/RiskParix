@@ -4,7 +4,6 @@ export async function fetchStocks(filters) {
   });
   const all = await res.json();
 
-  // 前端筛选逻辑
   return all.filter(item => {
     if (filters.year !== '选择年份' && +item["年份"] !== +filters.year) return false;
     if (+item["年涨跌幅"] < +filters.annual_return) return false;
