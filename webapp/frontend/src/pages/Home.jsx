@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchStocks } from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Home() {
   const [stocks, setStocks] = useState([]);
@@ -12,6 +13,7 @@ export default function Home() {
     pb_ratio: 0,
     sharpe_ratio: 0,
   });
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,17 +27,31 @@ export default function Home() {
   const services = ['soufflé服务器', '数据库', 'baostock实时行情'];
   const years = Array.from({ length: 2025 - 2014 }, (_, i) => 2014 + i);
 
+  const isDark = theme === 'dark';
+  const baseBg = isDark ? 'bg-gray-900 text-white' : 'bg-white text-black';
+  const cardBg = isDark ? 'bg-gray-800 text-white' : 'bg-white text-black';
+  const tableHead = isDark ? 'bg-blue-800 text-white' : 'bg-blue-900 text-white';
+  const sliderColor = isDark ? 'bg-gray-600' : 'bg-gray-300';
+
   return (
-    <div className="flex flex-col h-screen">
+    <div className={`flex flex-col h-screen ${baseBg}`}>
+      <div className="flex justify-end p-2">
+        <button
+          onClick={toggleTheme}
+          className="border px-3 py-1 rounded text-sm"
+        >
+          切换为 {theme === 'light' ? '深色' : '浅色'} 模式
+        </button>
+      </div>
       <div className="flex flex-1 overflow-hidden">
         {/* 服务列表 */}
-        <aside className="w-56 bg-gray-200 p-4 flex flex-col">
+        <aside className={`w-56 p-4 flex flex-col rounded-xl m-2 ${cardBg}`}>
           <h2 className="text-xl font-bold mb-4 text-center">服务列表</h2>
           <ul className="space-y-2 flex-1 overflow-y-auto">
             {services.map((srv) => (
               <li 
                 key={srv} 
-                className="text-gray-700 p-2 hover:bg-gray-300 rounded cursor-pointer"
+                className="p-2 hover:bg-blue-700 rounded cursor-pointer"
               >
                 {srv}
               </li>
@@ -44,7 +60,7 @@ export default function Home() {
         </aside>
 
         {/* 筛选面板 */}
-        <aside className="w-72 bg-gray-100 p-4 border-r border-gray-300 overflow-y-auto">
+        <aside className={`w-72 border-r border-gray-300 overflow-y-auto rounded-xl m-2 p-4 ${cardBg}`}>
           <h2 className="text-xl font-bold mb-4 text-center">筛选列表</h2>
           <div className="space-y-4">
             <div>
@@ -52,7 +68,7 @@ export default function Home() {
               <select
                 value={filters.year}
                 onChange={(e) => setFilters({ ...filters, year: e.target.value })}
-                className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
               >
                 <option>选择年份</option>
                 {years.map((y) => (
@@ -60,71 +76,58 @@ export default function Home() {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">年化收益率 ≥ {filters.annual_return}%</label>
-              <input type="range" min={0} max={50} value={filters.annual_return}
-                onChange={(e) => setFilters({ ...filters, annual_return: Number(e.target.value) })}
-                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">最大回撤 ≤ {filters.max_drawdown}%</label>
-              <input type="range" min={0} max={100} value={filters.max_drawdown}
-                onChange={(e) => setFilters({ ...filters, max_drawdown: Number(e.target.value) })}
-                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">市盈率 TTM ≤ {filters.pe_ratio}</label>
-              <input type="range" min={0} max={100} step={1} value={filters.pe_ratio}
-                onChange={(e) => setFilters({ ...filters, pe_ratio: Number(e.target.value) })}
-                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">市净率 MRQ ≤ {filters.pb_ratio.toFixed(1)}</label>
-              <input type="range" min={0} max={10} step={0.1} value={filters.pb_ratio}
-                onChange={(e) => setFilters({ ...filters, pb_ratio: Number(e.target.value) })}
-                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">夏普比率 ≥ {filters.sharpe_ratio.toFixed(1)}</label>
-              <input type="range" min={0} max={5} step={0.1} value={filters.sharpe_ratio}
-                onChange={(e) => setFilters({ ...filters, sharpe_ratio: Number(e.target.value) })}
-                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" />
-            </div>
+            {[
+              ['年化收益率 ≥', 'annual_return', 0, 50, '%'],
+              ['最大回撤 ≤', 'max_drawdown', 0, 100, '%'],
+              ['市盈率 TTM ≤', 'pe_ratio', 0, 100, ''],
+              ['市净率 MRQ ≤', 'pb_ratio', 0, 10, ''],
+              ['夏普比率 ≥', 'sharpe_ratio', 0, 5, '']
+            ].map(([label, key, min, max, suffix]) => (
+              <div key={key}>
+                <label className="block text-sm font-medium mb-1">
+                  {label} {filters[key].toFixed ? filters[key].toFixed(1) : filters[key]}{suffix}
+                </label>
+                <input
+                  type="range"
+                  min={min}
+                  max={max}
+                  step={key === 'pb_ratio' || key === 'sharpe_ratio' ? 0.1 : 1}
+                  value={filters[key]}
+                  onChange={(e) => setFilters({ ...filters, [key]: Number(e.target.value) })}
+                  className={`w-full h-2 ${sliderColor} rounded-lg appearance-none cursor-pointer`}
+                />
+              </div>
+            ))}
           </div>
         </aside>
 
         {/* 股票列表 */}
-        <main className="flex-1 bg-white p-4 overflow-auto">
+        <main className={`flex-1 p-4 overflow-auto rounded-xl m-2 ${cardBg}`}>
           <h2 className="text-xl font-bold mb-4 text-center">股票列表</h2>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden">
+              <thead className={tableHead}>
                 <tr>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">证券代码</th>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">证券名称</th>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">年份</th>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">年涨跌幅</th>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">最大回撤</th>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">市盈率</th>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">市净率</th>
-                  <th className="px-4 py-2 text-center text-white font-medium uppercase">夏普比率</th>
+                  {['证券代码','证券名称','年份','年涨跌幅','最大回撤','市盈率','市净率','夏普比率'].map(head => (
+                    <th key={head} className="px-4 py-2 text-center font-medium uppercase">{head}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}>
                 {stocks.map((stk) => (
                   <tr
                     key={stk.code}
-                    className="hover:bg-gray-100 cursor-pointer"
+                    className="hover:bg-blue-100 cursor-pointer"
                     onClick={() => navigate(`/detail/${stk.code}`)}
                   >
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.code}</td>
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.name}</td>
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.year}</td>
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.annual_return}</td>
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.max_drawdown}</td>
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.pe_ratio}</td>
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.pb_ratio}</td>
-                    <td className="px-4 py-2 text-center text-sm text-gray-800">{stk.sharpe_ratio}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.code}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.name}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.year}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.annual_return}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.max_drawdown}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.pe_ratio}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.pb_ratio}</td>
+                    <td className="px-4 py-2 text-center text-sm">{stk.sharpe_ratio}</td>
                   </tr>
                 ))}
               </tbody>
