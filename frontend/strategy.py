@@ -3,7 +3,7 @@ import csv
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 import pandas as pd
-from detail import DeepSeekClient, ChatBox # Assuming detail.py is in the same directory or accessible in PYTHONPATH
+from chat import ChatBox, DeepSeekClient
 
 class StrategyPage:
     def __init__(self, root):
