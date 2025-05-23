@@ -28,6 +28,7 @@ class DeepSeekClient:
         }
         self.kline_path = os.path.join("data", "day_klines", "sz50_klines.csv")
         self.metrics_path = os.path.join("data", "data_analysis", "all_metrics.csv")
+        self.order_path = os.path.join("data", "order_book", "order_book.csv")
 
     def get_system_prompt(self):
         system_prompt = (
@@ -43,12 +44,32 @@ class DeepSeekClient:
             f"- K线数据：{self.kline_path}\n"
             f"- 指标数据：{self.metrics_path}\n"
             "请提供清晰、专业的分析报告，包含可操作的见解。"
+            "不使用 markdown 格式，直接输出文本。"
         )
         return {"role": "system", "content": system_prompt}
+
+    def get_strategy_prompt(self):
+        strategy_prompt = (
+            """
+            你是一名专注于股票技术指标和K线图分析的市场专家。
+            你需要分析一个订单簿，然后根据这个订单簿，结合K线数据，
+            分析用户使用的策略。
+            """,
+            f"可用数据路径：\n"
+            f"- K线数据：{self.kline_path}\n"
+            f"- 指标数据：{self.metrics_path}\n"
+            f"- 订单簿数据：{self.order_path}\n"
+            "请提供清晰、专业的分析报告，包含可操作的见解。"
+            "不使用 markdown 格式，直接输出文本。"
+        )
+        return {"role": "system", "content": strategy_prompt}
 
     def chat(self, message, history=None):
         # 初始化消息，包含系统提示
         messages = [self.get_system_prompt()]
+
+        if len(self.stock_id) < 9:
+            messages = [self.get_strategy_prompt()]
         
         # 添加历史对话记录（如果存在）
         if history:
