@@ -100,7 +100,7 @@ class StrategyPage:
         filter_controls_frame.columnconfigure(1, weight=1)
 
 
-        tk.Button(user_frame, text="筛选", command=self.filter_users, font=("Helvetica", 11), bg="#007bff", fg="white", relief=tk.FLAT).pack(pady=(8, 10), padx=10, fill="x")
+        tk.Button(user_frame, text="筛选", command=self.filter_users, font=("Helvetica", 11), bg="#0596B7", fg="white", relief=tk.FLAT).pack(pady=(8, 10), padx=10, fill="x")
 
         user_table_frame = tk.Frame(user_frame)
         user_table_frame.pack(fill='both', expand=True, padx=5, pady=(0,5))
@@ -153,7 +153,7 @@ class StrategyPage:
         ai_frame.pack(side='left', fill='y', padx=(5, 0), ipadx=5, ipady=5) # MODIFIED: _width removed
         ai_frame.pack_propagate(False)
         
-        tk.Label(ai_frame, text='大语言模型分析助手', font=("Helvetica", 13, "bold"), bg='#f0f0f0').pack(pady=(10,5), padx=10)
+        tk.Label(ai_frame, text='DeepSeek 分析助手', font=("Helvetica", 13, "bold"), bg='#f0f0f0').pack(pady=(10,5), padx=10)
         
         self.chat_box = ChatBox(ai_frame) 
         self.chat_box.pack(fill="both", expand=True, padx=5, pady=(0,5))
@@ -162,7 +162,7 @@ class StrategyPage:
         # Bottom Frame: Return Button
         bottom_frame = tk.Frame(main_frame, bg='#ffffff')
         bottom_frame.pack(fill='x', pady=(10,0)) 
-        tk.Button(bottom_frame, text="返回主页", font=("Helvetica", 12), command=self.return_to_home, bg="#6c757d", fg="white", relief=tk.FLAT, width=10).pack(pady=5)
+        tk.Button(bottom_frame, text="返回主页", font=("Helvetica", 12), command=self.return_to_home, bg="#0596B7", fg="white", relief=tk.FLAT, width=10).pack(pady=5)
 
     def filter_users(self):
         """Filters the user list based on profit and win rate criteria."""

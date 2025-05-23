@@ -107,7 +107,7 @@ class ChatBox(tk.Frame):
         self.user_input.bind("<Return>", self.send_message)
 
         self.send_button = tk.Button(self.entry_frame, text="发送", command=self.send_message,
-                                     bg="#0078d4", fg="white", activebackground="#005a9e",
+                                     bg="#0596B7", fg="white", activebackground="#005a9e",
                                      relief=tk.FLAT, padx=12, pady=4, font=('Helvetica', 10, 'bold'))
         self.send_button.pack(side=tk.RIGHT)
 

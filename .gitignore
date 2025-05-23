@@ -59,3 +59,5 @@ junit.xml             # JUnit 测试报告
 data/
 venv/
 .idea/
+__pycache__/
+*.py[cod]

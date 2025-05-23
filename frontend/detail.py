@@ -39,12 +39,14 @@ class StockDetailPage:
         left_frame.pack(side="left", fill="y", padx=5, pady=5)
 
         # 中间图表面板
-        center_frame = tk.Frame(main_frame, bg="white")
-        center_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        center_frame = tk.Frame(main_frame, bg="white", width=860)
+        center_frame.pack_propagate(False)
+        center_frame.pack(side="left", fill="y", padx=5, pady=5) 
 
         # 右侧聊天面板
         right_frame = tk.Frame(main_frame, bg="white", width=400)
         right_frame.pack(side="left", fill="y", padx=5, pady=5)
+        tk.Label(right_frame, text='DeepSeek 分析助手', font=("Helvetica", 13, "bold"), bg='#f0f0f0').pack(pady=(10,5), padx=10)
 
         # 底部按钮面板
         bottom_frame = tk.Frame(self.root, bg="#f0f0f0", height=40)
@@ -80,7 +82,6 @@ class StockDetailPage:
 
         # 初始绘图
         if not self.df_k.empty:
-            print(1)
             self.plot_kline()
         else:
             tk.Label(self.chart_frame, text="未找到有效K线数据").pack()
@@ -93,7 +94,7 @@ class StockDetailPage:
         return_button = tk.Button(
             bottom_frame,
             text="返回主页",
-            bg="#4CAF50",
+            bg="#0596B7",
             fg="white",
             command=self.return_to_home
         )
@@ -182,7 +183,7 @@ class StockDetailPage:
             related_frame,
             text="编辑股票列表",
             font=("Microsoft YaHei", 11),
-            bg="#4CAF50",
+            bg="#0596B7",
             fg="white",
             command=self.edit_stock_list
         )
@@ -195,8 +196,6 @@ class StockDetailPage:
             self.stock_listbox.insert(tk.END, new_stock)
 
     def plot_kline(self):
-        """绘制K线图"""
-        # 清空之前图表
         for widget in self.chart_frame.winfo_children():
             widget.destroy()
 
@@ -206,15 +205,10 @@ class StockDetailPage:
 
         period = self.period_var.get()
         rule_map = {
-            "日K": 'D',
-            "周K": 'W-MON',
-            "月K": 'M',
-            "季K": 'Q',
-            "年K": 'Y'
+            "日K": 'D', "周K": 'W-MON', "月K": 'M', "季K": 'Q', "年K": 'Y'
         }
         rule = rule_map.get(period, 'D')
 
-        # 重采样数据
         resampled = self.df_k.resample(rule).agg({
             'open': 'first',
             'high': 'max',
@@ -223,37 +217,40 @@ class StockDetailPage:
             'volume': 'sum'
         }).dropna()
 
-        # 设置mplfinance中文显示
-        mc = mpf.make_marketcolors(up='r', down='g', inherit=True)
-        s = mpf.make_mpf_style(base_mpf_style='yahoo', marketcolors=mc, rc={
-            'axes.unicode_minus': False
-        })
+        mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='gray', volume='inherit')
+        s = mpf.make_mpf_style(
+            base_mpf_style='charles',
+            marketcolors=mc,
+            facecolor='whitesmoke',
+            edgecolor='gray',
+            rc={'font.family': 'SimHei', 'axes.unicode_minus': False}
+        )
 
-        # 创建图表
         fig, axlist = mpf.plot(
             resampled,
             type='candle',
             mav=(5, 10, 20),
-            volume=True,
+            volume=False,
             style=s,
             returnfig=True,
-            figsize=(10, 7),
-            title=f"K lines",
+            figsize=(14, 9),
+            title=f"{self.stock_code} K线图",
             ylabel='价格',
-            ylabel_lower='成交量',
             datetime_format='%Y-%m-%d',
             warn_too_much_data=10000
         )
 
-        # 嵌入Tkinter
+        # 将主图 y 轴移到左侧
+        if axlist and len(axlist) > 0:
+            axlist[0].yaxis.tick_left()
+            axlist[0].yaxis.set_label_position("left")
+
         canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
         canvas.draw()
 
-        # 添加工具栏
         toolbar = NavigationToolbar2Tk(canvas, self.chart_frame)
         toolbar.update()
-
-        # 布局
+        toolbar.pack(side=tk.TOP, fill=tk.X)
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def return_to_home(self):
