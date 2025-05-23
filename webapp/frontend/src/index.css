@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #1d4ed8;
+  --color-secondary: #374151;
+  --color-accent: #f59e0b;
+  --color-bg: #f9fafb;
+  --font-main: 'Helvetica Neue', Arial, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: var(--font-main);
+  background-color: var(--color-bg);
+  color: var(--color-secondary);
+}
+
+a { text-decoration: none; }
+
+/* 导航 */
+header {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.nav-link {
+  margin-left: 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+  transition: color 0.2s;
+}
+.nav-link.active,
+.nav-link:hover {
+  color: var(--color-primary);
+}
+
+/* 表格 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.5rem;
+}
+td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+tr:hover td {
+  background-color: #e0e7ff;
+}

@@ -217,13 +217,22 @@ class StockDetailPage:
             'volume': 'sum'
         }).dropna()
 
-        mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='gray', volume='inherit')
+        mc = mpf.make_marketcolors(
+            up='red', down='green',
+            edge='black', wick='black', volume='in'
+        )
         s = mpf.make_mpf_style(
-            base_mpf_style='charles',
+            base_mpf_style='yahoo',
             marketcolors=mc,
-            facecolor='whitesmoke',
-            edgecolor='gray',
-            rc={'font.family': 'SimHei', 'axes.unicode_minus': False}
+            facecolor='white',
+            edgecolor='black',
+            rc={
+                'font.family': 'Microsoft YaHei',
+                'axes.unicode_minus': False,
+                'axes.grid': True,
+                'grid.alpha': 0.3,
+                'grid.linestyle': '--'
+            }
         )
 
         fig, axlist = mpf.plot(
@@ -234,13 +243,17 @@ class StockDetailPage:
             style=s,
             returnfig=True,
             figsize=(14, 9),
-            title= "K线图",
             ylabel='价格',
             datetime_format='%Y-%m-%d',
+            tight_layout=True,
             warn_too_much_data=10000
         )
 
-        # 将主图 y 轴移到左侧
+        for ax in axlist:
+            ax.set_navigate(True)
+            ax.set_autoscale_on(True)
+            ax.grid(True)
+
         if axlist and len(axlist) > 0:
             axlist[0].yaxis.tick_left()
             axlist[0].yaxis.set_label_position("left")
@@ -252,6 +265,8 @@ class StockDetailPage:
         toolbar.update()
         toolbar.pack(side=tk.TOP, fill=tk.X)
         canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        canvas.get_tk_widget().pack_propagate(False)
 
     def return_to_home(self):
         """返回主页"""
