@@ -6,15 +6,13 @@ export async function fetchStocks(filters) {
 
     if (!res.ok) {
       console.error("Failed to fetch stocks:", res.status, await res.text());
-      return []; // Return empty array on error or throw an error
+      return [];
     }
 
     const allItems = await res.json();
 
     // Filter using the raw keys from the API response
     const filteredItems = allItems.filter(item => {
-      // Handle year filter: filters.year can be '' or a number
-      // The backend receives '选择年份' if no year is selected.
       if (filters.year && filters.year !== '选择年份' && item["年份"] != filters.year) { // Use loose equality for year as it might be string vs number initially
         return false;
       }
@@ -24,7 +22,6 @@ export async function fetchStocks(filters) {
       const maxDrawdown = parseFloat(item["最大回撤"]);
       const peRatio = parseFloat(item["市盈率"]);
       const pbRatio = parseFloat(item["市净率"]);
-      // The API provides "夏普比率-普通收益率-日-一年定存利率" which maps to sharpe_ratio.
       const sharpeRatio = parseFloat(item["夏普比率-普通收益率-日-一年定存利率"]);
 
       // Initial filter for annual_return is 0.
@@ -55,7 +52,7 @@ export async function fetchStocks(filters) {
 
   } catch (error) {
     console.error("Error in fetchStocks:", error);
-    return []; // Return empty array on network error or JSON parsing error
+    return [];
   }
 }
 
@@ -111,7 +108,6 @@ export async function sendChat({ message, history = [], stock_id = null }) {
     });
     if (!res.ok) {
       console.error("Failed to send chat message:", res.status, await res.text());
-      // Decide what to return on error, maybe throw or return a specific error structure
       return "Error sending message"; 
     }
     const data = await res.json();
