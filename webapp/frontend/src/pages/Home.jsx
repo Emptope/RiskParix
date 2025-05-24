@@ -6,6 +6,8 @@ import debounce from 'lodash/debounce';
 
 export default function Home() {
   const [allStocks, setAllStocks] = useState([]);
+  const [displayStocks, setDisplayStocks] = useState([]);
+  const [displayCount, setDisplayCount] = useState(50); // 初始展示数量
   const [filters, setFilters] = useState({
     year: '',
     annual_return: 0,
@@ -53,6 +55,7 @@ export default function Home() {
   };
 
   const filteredStocks = useMemo(() => {
+    setDisplayCount(50); // 筛选变动时重置展示数量
     return allStocks.filter((item) => {
       if (filters.year && String(item.year) !== String(filters.year)) return false;
       if (Number(item.annual_return) < filters.annual_return) return false;
@@ -80,6 +83,17 @@ export default function Home() {
         : String(bVal).localeCompare(String(aVal));
     });
   }, [filteredStocks, sortConfig]);
+
+  useEffect(() => {
+    setDisplayStocks(sortedStocks.slice(0, displayCount));
+  }, [sortedStocks, displayCount]);
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      setDisplayCount((prev) => Math.min(prev + 50, sortedStocks.length));
+    }
+  };
 
   const services = ['soufflé服务器', '数据库', 'baostock实时行情'];
   const years = Array.from({ length: 2025 - 2014 }, (_, i) => 2014 + i);
@@ -161,7 +175,7 @@ export default function Home() {
           </div>
         </aside>
 
-        <main className={`flex-1 p-4 overflow-auto rounded-xl m-2 ${cardBg}`}>
+        <main className={`flex-1 p-4 overflow-auto rounded-xl m-2 ${cardBg}`} onScroll={handleScroll}>
           <h2 className="text-xl font-bold mb-4 text-center">股票列表</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden">
@@ -186,7 +200,7 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody className={isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}>
-                {sortedStocks.map((stk) => (
+                {displayStocks.map((stk) => (
                   <tr
                     key={stk.code + stk.year}
                     className="hover:bg-blue-100 cursor-pointer"
