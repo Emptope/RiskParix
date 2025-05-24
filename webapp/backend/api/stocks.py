@@ -10,3 +10,4 @@ def get_stocks():
     query = f"SELECT * FROM '{path}'"
     df = duckdb.query(query).to_df()
     return df.to_dict(orient="records")
+   
