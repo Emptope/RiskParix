@@ -1,4 +1,3 @@
-// Detail Themed with Coordinated Dark Mode Styling
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchStockDetail, sendChat } from "../api/api";
@@ -226,31 +225,73 @@ export default function Detail() {
     if (!inputValue.trim() || isLoading) return;
 
     const userMessage = { role: "user", content: inputValue };
-    setMessages((prev) => [...prev, userMessage]);
+    const currentHistory = [...messages, userMessage];
+
+    setMessages(currentHistory);
     setInputValue("");
-    textareaRef.current.style.height = "auto";
     setIsLoading(true);
 
     try {
-      const response = await sendChat({
-        message: inputValue,
-        history: messages
-          .filter((msg) => msg.role !== "ai")
-          .map((msg) => ({
-            role: msg.role === "user" ? "user" : "assistant",
-            content: msg.content,
-          })),
-        stock_id: code,
+      const trimmedHistory = currentHistory
+        .filter((msg) => msg.role === "user" || msg.role === "ai")
+        .slice(-6)
+        .map((msg) => ({
+          role: msg.role === "user" ? "user" : "assistant",
+          content: msg.content,
+        }));
+
+      const res = await fetch("http://localhost:8000/api/chat/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: inputValue,
+          history: trimmedHistory,
+          stock_id: code,
+        }),
       });
 
-      setMessages((prev) => [...prev, { role: "ai", content: response }]);
-    } catch (error) {
+      if (!res.ok || !res.body) throw new Error("连接失败");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let partial = "";
+      let aiText = "";
+
+      // 先插入空 AI 消息，并记录插入位置
+      let aiIndex = currentHistory.length;
+      setMessages((prev) => [...prev, { role: "ai", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        partial += decoder.decode(value, { stream: true });
+        const lines = partial.split("\n\n");
+
+        for (let i = 0; i < lines.length - 1; i++) {
+          const line = lines[i].trim();
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") {
+              setIsLoading(false);
+              return;
+            }
+            aiText += data;
+
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[aiIndex].content = aiText;
+              return updated;
+            });
+          }
+        }
+
+        partial = lines[lines.length - 1];
+      }
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "ai",
-          content: `请求出错: ${error.message}`,
-        },
+        { role: "ai", content: "发生错误: " + err.message },
       ]);
     } finally {
       setIsLoading(false);
@@ -391,23 +432,10 @@ export default function Detail() {
                     <div className="whitespace-pre-line">
                       <ReactMarkdown
                         components={{
-                          // 处理空段落（连续换行）
-                          p: ({ node, ...props }) => {
-                            const isEmpty = React.Children.toArray(
-                              props.children
-                            ).every(
-                              (child) =>
-                                child === "\n" ||
-                                (typeof child === "string" &&
-                                  child.trim() === "")
-                            );
-                            return isEmpty ? (
-                              <br />
-                            ) : (
-                              <div className="mb-2">{props.children}</div>
-                            );
-                          },
-                          br: ({ node, ...props }) => <>{"\n"}</>, // 转换为普通换行
+                          p: ({ node, ...props }) => (
+                            <div className="mb-2">{props.children}</div>
+                          ),
+                          br: () => <br />,
                           ol: ({ node, ...props }) => (
                             <ol
                               className="list-decimal pl-5 my-2 space-y-1"
@@ -447,12 +475,7 @@ export default function Detail() {
                           ),
                         }}
                       >
-                        {
-                          msg.content
-                            .replace(/\n{3,}/g, "\n\n") // 将3个以上换行缩减为2个
-                            .replace(/<br\s*\/?>/gi, "") // 将HTML的br标签转换为空
-                            .replace(/<\/?p>/gi, "\n") // 移除HTML的p标签
-                        }
+                        {msg.content}
                       </ReactMarkdown>
                     </div>
                   )}
