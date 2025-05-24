@@ -68,12 +68,19 @@ export default function Detail() {
 
   const resampleKline = (data, period) => {
     if (period === '日K') return data;
+
     const formatMap = {
       周K: (date) => dayjs(date).startOf('week').format('YYYY-MM-DD'),
       月K: (date) => dayjs(date).startOf('month').format('YYYY-MM-DD'),
-      季K: (date) => dayjs(date).startOf('quarter').format('YYYY-MM-DD'),
       年K: (date) => dayjs(date).startOf('year').format('YYYY-MM-DD'),
+      季K: (date) => {
+        const d = dayjs(date);
+        const month = d.month(); // 0-11
+        const startMonth = [0, 3, 6, 9][Math.floor(month / 3)];
+        return dayjs(`${d.year()}-${(startMonth + 1).toString().padStart(2, '0')}-01`).format('YYYY-MM-DD');
+      }
     };
+
     const grouped = groupBy(data, (item) => formatMap[period](item.date));
     return Object.entries(grouped).map(([date, group]) => ({
       date,
@@ -83,7 +90,7 @@ export default function Detail() {
       high: Math.max(...group.map((i) => i.high)),
     }));
   };
-
+  
   const calculateEMA = (data, dayCount) => {
     const result = [];
     let multiplier = 2 / (dayCount + 1);
