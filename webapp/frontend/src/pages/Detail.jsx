@@ -275,7 +275,6 @@ export default function Detail() {
         </button>
       </div>
       <div className="flex flex-1 overflow-hidden">
-
         {/* 左侧估值信息 */}
         <div className={`w-1/4 p-4 overflow-y-auto ${sectionBg}`}>
           <h2 className="text-lg font-semibold mb-2">估值信息</h2>
@@ -366,64 +365,118 @@ export default function Detail() {
             DeepSeek 分析助手
           </h2>
 
-{/* 消息展示区域 */}
-<div className={`flex-1 overflow-y-auto rounded-lg mb-3 ${isDark ? "bg-[#1e1e1e]" : "bg-gray-50"}`}>
-  <div className="p-3 space-y-3" style={{ minHeight: "100%" }}>
-    {messages.map((msg, index) => (
-      <div
-        key={index}
-        className={`p-4 rounded-lg max-w-[90%] shadow-sm ${
-          msg.role === "user"
-            ? "ml-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-            : `mr-auto ${isDark ? "bg-[#2d2d2d] text-gray-100" : "bg-white text-gray-800 border border-gray-200"}`
-        }`}
-      >
-        {msg.isHtml ? (
-          parse(msg.content)
-        ) : (
-          <div className="whitespace-pre-line">
-            <ReactMarkdown
-              components={{
-                // 处理空段落（连续换行）
-                p: ({node, ...props}) => {
-                  const isEmpty = React.Children.toArray(props.children).every(
-                    child => child === '\n' || (typeof child === 'string' && child.trim() === '')
-                  );
-                  return isEmpty ? <br /> : <div className="mb-2">{props.children}</div>;
-                },
-                br: ({node, ...props}) => <>{'\n'}</>, // 转换为普通换行
-                ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
-                ul: ({node, ...props}) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
-                li: ({node, ...props}) => <li className="mb-0.5" {...props} />,
-                strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
-                em: ({node, ...props}) => <em className="italic" {...props} />,
-                h1: ({node, ...props}) => <h2 className={`text-lg font-bold my-3 ${isDark ? "text-blue-300" : "text-blue-600"}`} {...props} />,
-                h2: ({node, ...props}) => <h3 className={`text-base font-semibold my-2 ${isDark ? "text-blue-300" : "text-blue-600"}`} {...props} />,
-              }}
-            >
-              {msg.content
-                .replace(/\n{3,}/g, '\n\n') // 将3个以上换行缩减为2个
-                .replace(/<br\s*\/?>/gi, '') // 将HTML的br标签转换为空
-                .replace(/<\/?p>/gi, '\n')  // 移除HTML的p标签
-              }
-            </ReactMarkdown>
+          {/* 消息展示区域 */}
+          <div
+            className={`flex-1 overflow-y-auto rounded-lg mb-3 ${
+              isDark ? "bg-[#1e1e1e]" : "bg-gray-50"
+            }`}
+          >
+            <div className="p-3 space-y-3" style={{ minHeight: "100%" }}>
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg max-w-[90%] shadow-sm ${
+                    msg.role === "user"
+                      ? "ml-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+                      : `mr-auto ${
+                          isDark
+                            ? "bg-[#2d2d2d] text-gray-100"
+                            : "bg-white text-gray-800 border border-gray-200"
+                        }`
+                  }`}
+                >
+                  {msg.isHtml ? (
+                    parse(msg.content)
+                  ) : (
+                    <div className="whitespace-pre-line">
+                      <ReactMarkdown
+                        components={{
+                          // 处理空段落（连续换行）
+                          p: ({ node, ...props }) => {
+                            const isEmpty = React.Children.toArray(
+                              props.children
+                            ).every(
+                              (child) =>
+                                child === "\n" ||
+                                (typeof child === "string" &&
+                                  child.trim() === "")
+                            );
+                            return isEmpty ? (
+                              <br />
+                            ) : (
+                              <div className="mb-2">{props.children}</div>
+                            );
+                          },
+                          br: ({ node, ...props }) => <>{"\n"}</>, // 转换为普通换行
+                          ol: ({ node, ...props }) => (
+                            <ol
+                              className="list-decimal pl-5 my-2 space-y-1"
+                              {...props}
+                            />
+                          ),
+                          ul: ({ node, ...props }) => (
+                            <ul
+                              className="list-disc pl-5 my-2 space-y-1"
+                              {...props}
+                            />
+                          ),
+                          li: ({ node, ...props }) => (
+                            <li className="mb-0.5" {...props} />
+                          ),
+                          strong: ({ node, ...props }) => (
+                            <strong className="font-semibold" {...props} />
+                          ),
+                          em: ({ node, ...props }) => (
+                            <em className="italic" {...props} />
+                          ),
+                          h1: ({ node, ...props }) => (
+                            <h2
+                              className={`text-lg font-bold my-3 ${
+                                isDark ? "text-blue-300" : "text-blue-600"
+                              }`}
+                              {...props}
+                            />
+                          ),
+                          h2: ({ node, ...props }) => (
+                            <h3
+                              className={`text-base font-semibold my-2 ${
+                                isDark ? "text-blue-300" : "text-blue-600"
+                              }`}
+                              {...props}
+                            />
+                          ),
+                        }}
+                      >
+                        {
+                          msg.content
+                            .replace(/\n{3,}/g, "\n\n") // 将3个以上换行缩减为2个
+                            .replace(/<br\s*\/?>/gi, "") // 将HTML的br标签转换为空
+                            .replace(/<\/?p>/gi, "\n") // 移除HTML的p标签
+                        }
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {/* 保留加载状态和滚动锚点 */}
+              {isLoading && (
+                <div
+                  className={`mr-auto p-4 rounded-lg max-w-[90%] ${
+                    isDark
+                      ? "bg-[#2d2d2d] text-gray-300"
+                      : "bg-white text-gray-700 border border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-100"></div>
+                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-200"></div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
-        )}
-      </div>
-    ))}
-    {/* 保留加载状态和滚动锚点 */}
-    {isLoading && (
-      <div className={`mr-auto p-4 rounded-lg max-w-[90%] ${isDark ? "bg-[#2d2d2d] text-gray-300" : "bg-white text-gray-700 border border-gray-200"}`}>
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
-          <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-100"></div>
-          <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-200"></div>
-        </div>
-      </div>
-    )}
-    <div ref={messagesEndRef} />
-  </div>
-</div>
 
           {/* 输入框与发送按钮 */}
           <div
