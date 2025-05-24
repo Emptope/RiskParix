@@ -121,3 +121,30 @@ export async function sendChat({ message, history = [], stock_id = null }) {
     return "Error sending message";
   }
 }
+
+/**
+ * @typedef {Object} StockItem
+ * @property {string} code - 股票代码
+ * @property {string} name - 股票名称
+ * @property {number} year - 年份
+ * @property {number} annual_return - 年涨跌幅
+ * @property {number} max_drawdown - 最大回撤
+ * @property {number} pe_ratio - 市盈率
+ * @property {number} pb_ratio - 市净率
+ * @property {number} sharpe_ratio - 夏普比率
+ */
+
+/**
+ * @typedef {Object} KlineItem
+ * @property {string} date - 日期
+ * @property {number} open - 开盘价
+ * @property {number} close - 收盘价
+ * @property {number} low - 最低价
+ * @property {number} high - 最高价
+ */
+
+/**
+ * @typedef {Object} ChatMessage
+ * @property {'user'|'assistant'} role - 角色
+ * @property {string} content - 内容
+ */
