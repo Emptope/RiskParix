@@ -8,8 +8,8 @@
 
 # 整体架构
 
-- **script/** 处理后端数据
-- **frontend/** 绘制前端面板
+- **script/** 处理数据
+- **desktop/** 应用面板
   - **home.py** 主面板
   - **detail.py** 个股展示面板
   - **strategy.py** 策略选择面板
@@ -18,8 +18,6 @@
   - **backend/** 后端 FastAPI
 
 # 数据平面
-
-## 数据分析模块
 
 ## 基础参数
 
