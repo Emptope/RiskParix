@@ -83,9 +83,11 @@ td {
 }
 tr:hover td {
   background-color: #e0e7ff;
+  color: black;
 }
 .dark tr:hover td {
   background-color: #1e3a8a;
+  color: white;
 }
 
 /* 聊天界面样式 */
