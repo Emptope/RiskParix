@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import json
 from typing import Optional, Dict, List
@@ -56,10 +57,36 @@ class DeepSeekClient:
             )
         }
 
-    def format_response(self, raw_response: str) -> str:
-        if not raw_response.strip():
-            return self.prompt_templates["empty_response"]
-        return raw_response
+    def format_response(self, raw: str) -> str:
+        txt = raw.replace("\r\n", "\n").replace("\r", "\n")
+
+        # 把 "-###" / "- ###" / "-### *" 转回标题 -----------------
+        def _fix_bullet_heading(match: re.Match) -> str:
+            hashes = match.group(1)  # ### 或 ## 等
+            title = match.group(2).strip()
+            title = re.sub(r"^\*+|\*+$", "", title).strip()
+            return f"\n{hashes} {title}"
+
+        txt = re.sub(r"\n\s*-\s*(#+)\s*(.*?)\s*$", _fix_bullet_heading, txt, flags=re.MULTILINE)
+
+        # 水平线独立行 ---------------------------------------------
+        txt = re.sub(r"\s*-{3,}\s*", "\n---\n", txt)
+
+        # 标题行首化（剩余正常标题） -------------------------------
+        txt = re.sub(r"(?<!\n)(#+ )", r"\n\1", txt)
+
+        # 列表符号行首化 -------------------------------------------
+        txt = re.sub(r"(?<!\n)([\-*+])\s+", r"\n\1 ", txt)
+        txt = re.sub(r"(?<!\n)(\d+\.)\s+", r"\n\1 ", txt)
+
+        # 粗体/斜体孤立星号 → 去除 -------------------------------
+        txt = re.sub(r"\*\*(.*?)\*\*", r" **\1** ", txt)
+        txt = re.sub(r"_(.*?)_", r" _\1_ ", txt)
+
+        # 连续 ≥3 空行 → 2 空行 -----------------------------------
+        txt = re.sub(r"\n{3,}", "\n\n", txt)
+
+        return txt.rstrip() 
 
     def chat(self, message: str, history: Optional[List[Dict]] = None, stream: bool = False) -> str:
         messages = [self.get_system_prompt()]
@@ -102,7 +129,8 @@ class DeepSeekClient:
     def stream_chat(self, message: str, history: Optional[List[Dict]] = None):
         messages = [self.get_system_prompt()]
         if history:
-            messages.extend(history[-6:])  # 限制历史最多6条，避免重复
+            messages.extend(history[-6:])
+        
         messages.append({"role": "user", "content": message})
 
         payload = {
@@ -121,19 +149,22 @@ class DeepSeekClient:
                 stream=True,
                 timeout=60,
             )
+            
             for line in response.iter_lines(decode_unicode=True):
                 if line.startswith("data: "):
                     content = line.replace("data: ", "")
                     if content.strip() == "[DONE]":
                         break
                     try:
-                        delta = json.loads(content)["choices"][0]["delta"]
-                        if "content" in delta:
-                            yield delta["content"]
-                    except Exception:
+                        data = json.loads(content)
+                        if "choices" in data and data["choices"]:
+                            delta = data["choices"][0].get("delta", {})
+                            if "content" in delta:
+                                yield self.format_response(delta["content"])
+                    except json.JSONDecodeError:
                         continue
         except Exception as e:
-            yield f"[请求失败] {str(e)}"
+            yield f"【请求错误】{str(e)}"
 
     def _handle_stream_response(self, response) -> str:
         full_content = []

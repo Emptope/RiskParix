@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { useTheme } from "../context/ThemeContext";
 import ReactMarkdown from "react-markdown";
 import parse from "html-react-parser";
+import remarkGfm from "remark-gfm";
 
 export default function Detail() {
   const { code } = useParams();
@@ -269,7 +270,7 @@ export default function Detail() {
         const lines = partial.split("\n\n");
 
         for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i].trim();
+          const line = lines[i];
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
             if (data === "[DONE]") {
@@ -397,7 +398,6 @@ export default function Detail() {
             />
           </div>
         </div>
-
         {/* 右侧聊天助手 */}
         <div
           className={`w-1/4 p-4 flex flex-col border-l ${sectionBg} chat-container`}
@@ -413,83 +413,33 @@ export default function Detail() {
             }`}
           >
             <div className="p-3 space-y-3" style={{ minHeight: "100%" }}>
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg max-w-[90%] shadow-sm ${
-                    msg.role === "user"
-                      ? "ml-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-                      : `mr-auto ${
-                          isDark
-                            ? "bg-[#2d2d2d] text-gray-100"
-                            : "bg-white text-gray-800 border border-gray-200"
-                        }`
-                  }`}
-                >
-                  {msg.isHtml ? (
-                    parse(msg.content)
-                  ) : (
-                    <div className="whitespace-pre-line">
-                      <ReactMarkdown
-                        components={{
-                          p: ({ node, ...props }) => (
-                            <div className="mb-2">{props.children}</div>
-                          ),
-                          br: () => <br />,
-                          ol: ({ node, ...props }) => (
-                            <ol
-                              className="list-decimal pl-5 my-2 space-y-1"
-                              {...props}
-                            />
-                          ),
-                          ul: ({ node, ...props }) => (
-                            <ul
-                              className="list-disc pl-5 my-2 space-y-1"
-                              {...props}
-                            />
-                          ),
-                          li: ({ node, ...props }) => (
-                            <li className="mb-0.5" {...props} />
-                          ),
-                          strong: ({ node, ...props }) => (
-                            <strong className="font-semibold" {...props} />
-                          ),
-                          em: ({ node, ...props }) => (
-                            <em className="italic" {...props} />
-                          ),
-                          h1: ({ node, ...props }) => (
-                            <h2
-                              className={`text-lg font-bold my-3 ${
-                                isDark ? "text-blue-300" : "text-blue-600"
-                              }`}
-                              {...props}
-                            />
-                          ),
-                          h2: ({ node, ...props }) => (
-                            <h3
-                              className={`text-base font-semibold my-2 ${
-                                isDark ? "text-blue-300" : "text-blue-600"
-                              }`}
-                              {...props}
-                            />
-                          ),
-                        }}
-                      >
-                        {msg.content}
-                      </ReactMarkdown>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {/* 保留加载状态和滚动锚点 */}
+              {messages.map((msg, index) =>
+                msg.role === "user" ? (
+                  <div
+                    key={index}
+                    className="ml-auto p-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white max-w-[90%] shadow-sm"
+                  >
+                    {msg.content}
+                  </div>
+                ) : (
+                  <div
+                    key={index}
+                    className={`prose prose-base max-w-full ${
+                      isDark ? "prose-invert text-gray-100" : "text-gray-900"
+                    }`}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                )
+              )}
+
+              {/* 加载状态 */}
               {isLoading && (
-                <div
-                  className={`mr-auto p-4 rounded-lg max-w-[90%] ${
-                    isDark
-                      ? "bg-[#2d2d2d] text-gray-300"
-                      : "bg-white text-gray-700 border border-gray-200"
-                  }`}
-                >
+                <div className="text-sm text-gray-400">
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
                     <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-100"></div>
