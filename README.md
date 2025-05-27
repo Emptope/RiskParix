@@ -57,3 +57,14 @@
 - 数据存储优化：使用 Parquet 格式存储 K线与账本数据，节省空间，读取快速
 
 - TailwindCSS 快速样式开发：结合 PostCSS 与 Tailwind 配置，UI 开发灵活高效
+
+## 快速上手
+
+将 data 文件夹放置于项目根目录以及 web/backend/ 目录下，然后
+
+- Windows
+  - 桌面端：运行 desktop/home.py
+  - 网页端：Powershell 中切换到 web 目录 (`cd .\web\`)，然后输入 `.\start.bat` 运行，关闭新打开的终端停止运行
+- MacOS / Linux
+  - 桌面端：运行 desktop/home.py
+  - 网页端：在终端中输入 `cd web` 切换到 web 目录，输入 `chmod +x start.sh` 加上执行权限，最后输入 `./start.sh` 运行，按 `Ctrl-C` 停止运行
