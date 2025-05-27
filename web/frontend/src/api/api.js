@@ -85,20 +85,6 @@ export async function fetchUsers() {
   }
 }
 
-export async function fetchTrades() {
-  try {
-    const res = await fetch("http://localhost:8000/api/trades");
-    if (!res.ok) {
-      console.error("Failed to fetch trades:", res.status, await res.text());
-      return [];
-    }
-    return await res.json();
-  } catch (error) {
-    console.error("Error in fetchTrades:", error);
-    return [];
-  }
-}
-
 export async function sendChat({ message, history = [], stock_id = null }) {
   try {
     const res = await fetch("http://localhost:8000/api/chat", {

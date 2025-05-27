@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchStockDetail, sendChat } from "../api/api";
+import { fetchStockDetail } from "../api/api";
 import ReactECharts from "echarts-for-react";
 import Papa from "papaparse";
 import groupBy from "lodash/groupBy";
 import dayjs from "dayjs";
 import { useTheme } from "../context/ThemeContext";
 import ReactMarkdown from "react-markdown";
-import parse from "html-react-parser";
 import remarkGfm from "remark-gfm";
 
 export default function Detail() {

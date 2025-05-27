@@ -10,32 +10,38 @@
 
 - **script/** 处理数据
 - **desktop/** 应用面板
-  - **home.py** 主面板
+  - **chat.py** ai 聊天板块
   - **detail.py** 个股展示面板
+  - **home.py** 主面板
   - **strategy.py** 策略选择面板
-- **web/** 网页版
-  - **frontend/** 前端 React + Vite
+- **web/** 网页
   - **backend/** 后端 FastAPI
-
-# 数据平面
-
-## 基础参数
-
-1. 年化收益率
-   计算：通过日收益率计算年化收益率，反映股票的长期回报。
-2. 最大回撤
-   计算：衡量股票从最高点到最低点的最大跌幅，反映其风险。
-3. 波动率
-   计算：通过日收益率的标准差衡量波动性，反映风险。
-4. 夏普比率
-   计算：衡量单位风险下的超额回报，评估风险调整后的收益。
-
-<!-- # 控制平面
-
-## OMS 订单管理系统
-
-将策略获得的持仓信息转化为订单信息可以根据订单信息获得计算参数
-
-## EMS 交易管理系统
-
-根据 OMS 获得的订单信息使用东方证券 EMT 极速柜台进行交易 -->
+    - **api/**
+      - **chat.py** ai 聊天接口
+      - **deepseek.py** 接入 deepseek api
+      - **kline.py** K 线数据 (all_klines.parquet)
+      - **stocks.py** 个股详细数据 (details.parquet)
+      - **users.py** 用户账本数据 (user_summary.parquet)
+    - **app.py** 路由注册
+  - **frontend/** 前端 React + Vite
+    - **src/** 
+      - **api/**
+        - **api.js** 接口函数定义
+      - **components/**
+        - **NavBar.jsx** 导航栏
+      - **context/**
+        - **ThemeContext.jsx** 浅色深色模式切换
+      - **pages/**
+        - **Detail.jsx** 个股详情页
+        - **Home.jsx** 主页
+        - **Strategy.jsx** 策略选择页面
+      - **App.jsx** App 框架
+      - **index.css** 全局 CSS
+      - **main.jsx** 全局框架
+    - **index.html**
+    - **package.json** nodejs 包配置文件
+    - **postcss.config.js** postcss 配置文件
+    - **tailwind.config.js** tailwindcss 配置文件
+    - **vite.config.js** vite 配置文件
+  - **start.bat** Windows 系统启动脚本
+  - **start.sh** Shell 启动脚本
