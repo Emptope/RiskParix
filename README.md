@@ -60,11 +60,11 @@
 
 ## 快速上手
 
-将 data 文件夹放置于项目根目录以及 web/backend/ 目录下，然后
+将 data 文件夹放置于项目根目录以及 web/backend/ 目录下，`cd web` 切换到 web 目录，运行 `npm install` 安装网页端所需的包，然后
 
 - Windows
   - 桌面端：运行 desktop/home.py
-  - 网页端：Powershell 中切换到 web 目录 (`cd .\web\`)，然后输入 `.\start.bat` 运行，关闭新打开的终端停止运行
+  - 网页端：Powershell 中输入`cd web`切换到 web 目录，然后输入 `.\start.bat` 运行，关闭新打开的终端停止运行
 - MacOS / Linux
   - 桌面端：运行 desktop/home.py
   - 网页端：在终端中输入 `cd web` 切换到 web 目录，输入 `chmod +x start.sh` 加上执行权限，最后输入 `./start.sh` 运行，按 `Ctrl-C` 停止运行
