@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { fetchUsers, fetchOrderBook } from '../api/api';
 
 export default function Strategy() {
   const [users, setUsers] = useState([]);
-  const [trades, setTrades] = useState([]);
+  const [orderBook, setOrderBook] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [profitFilter, setProfitFilter] = useState(0);
@@ -27,21 +28,26 @@ export default function Strategy() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('/data/user_summary.json')
-      .then(res => res.json())
+    fetchUsers()
       .then(data => {
         setUsers(data);
         setFilteredUsers(data);
-      });
+      })
+      .catch(err => console.error('获取用户数据失败:', err));
 
-    fetch('/data/trade_records.json')
-      .then(res => res.json())
-      .then(data => setTrades(data));
+    fetchOrderBook()
+      .then(data => setOrderBook(data))
+      .catch(err => console.error('获取订单数据失败:', err));
   }, []);
 
   useEffect(() => {
     if (selectedUser) {
-      setMessages([{ role: 'ai', content: `当前用户：${selectedUser}，请问您想分析什么？` }]);
+      setMessages([
+        { 
+          role: 'ai', 
+          content: `当前用户：${selectedUser}，请问您想分析什么？\n\n您可以尝试询问：\n- 这个用户使用的交易策略是什么？\n- 分析该用户的交易表现\n- 该用户的风险管理方式如何？\n- 有哪些策略优化建议？` 
+        }
+      ]);
     } else {
       setMessages([]);
     }
@@ -53,7 +59,7 @@ export default function Strategy() {
 
   const handleFilter = () => {
     const result = users.filter(
-      user => user.收益率 >= profitFilter && user.胜率 >= winRateFilter
+      user => user.returnRate >= profitFilter && user.winRate >= winRateFilter
     );
     setFilteredUsers(result);
     setSelectedUser(null);
@@ -66,7 +72,7 @@ export default function Strategy() {
     setMessages(currentHistory);
     setInputValue('');
     setIsLoading(true);
-
+  
     try {
       const trimmedHistory = currentHistory
         .filter(msg => msg.role === 'user' || msg.role === 'ai')
@@ -75,33 +81,33 @@ export default function Strategy() {
           role: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content,
         }));
-
+  
       const res = await fetch('http://localhost:8000/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: inputValue,
           history: trimmedHistory,
-          stock_id: selectedUser,
+          stock_id: selectedUser, // 确保传递选中的用户ID
         }),
       });
-
+  
       if (!res.ok || !res.body) throw new Error('连接失败');
-
+  
       const reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let partial = '';
       let aiText = '';
       const aiIndex = currentHistory.length;
       setMessages(prev => [...prev, { role: 'ai', content: '' }]);
-
+  
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
+  
         partial += decoder.decode(value, { stream: true });
         const lines = partial.split('\n\n');
-
+  
         for (let i = 0; i < lines.length - 1; i++) {
           const line = lines[i];
           if (line.startsWith('data: ')) {
@@ -118,7 +124,7 @@ export default function Strategy() {
             });
           }
         }
-
+  
         partial = lines[lines.length - 1];
       }
     } catch (err) {
@@ -138,7 +144,7 @@ export default function Strategy() {
     }
   };
 
-  const userOrders = trades.filter(t => t.用户名 === selectedUser);
+  const userOrders = orderBook.filter(order => order.user === selectedUser);
 
   return (
     <div className={`flex flex-col h-screen ${baseBg}`}>
@@ -197,54 +203,52 @@ export default function Strategy() {
             <tbody>
               {filteredUsers.map(user => (
                 <tr
-                  key={user.用户名}
-                  className={`cursor-pointer hover:bg-blue-100 ${selectedUser === user.用户名 ? 'bg-blue-200' : ''}`}
-                  onClick={() => setSelectedUser(user.用户名)}
+                  key={user.user}
+                  className={`cursor-pointer hover:bg-blue-100 ${selectedUser === user.user ? 'bg-blue-200' : ''}`}
+                  onClick={() => setSelectedUser(user.user)}
                 >
-                  <td className="text-center py-1">{user.用户名}</td>
-                  <td className="text-center">{user.交易笔数}</td>
-                  <td className="text-right pr-2">{user.收益率.toFixed(2)}%</td>
-                  <td className="text-right pr-2">{user.胜率.toFixed(2)}%</td>
+                  <td className="text-center py-1">{user.user}</td>
+                  <td className="text-center">{user.trades}</td>
+                  <td className="text-right pr-2">{user.returnRate.toFixed(2)}%</td>
+                  <td className="text-right pr-2">{user.winRate.toFixed(2)}%</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </aside>
 
-        <main className={`w-2/4 p-4 overflow-y-auto rounded-xl m-2 ${cardBg}`}>
+        <main className={`flex-1 p-4 overflow-auto rounded-xl m-2 ${cardBg}`}>
           <h2 className="text-xl font-bold mb-4 text-center">订单列表</h2>
-          <table className="w-full text-sm table-fixed border-collapse rounded-xl overflow-hidden">
-            <thead className={tableHead}>
-              <tr>
-                <th className="py-2">时间</th>
-                <th>代码</th>
-                <th>方向</th>
-                <th>成交价</th>
-                <th>成交量</th>
-                <th>成交额</th>
-              </tr>
-            </thead>
-            <tbody>
-              {userOrders.length > 0 ? (
-                userOrders.map((order, i) => (
-                  <tr key={i} className="border-t">
-                    <td>{order.交易时间}</td>
-                    <td>{order.证券代码}</td>
-                    <td>{order.方向}</td>
-                    <td className="text-right pr-2">{order.成交价?.toFixed(2)}</td>
-                    <td className="text-right pr-2">{order.成交量}</td>
-                    <td className="text-right pr-2">{order.成交额?.toFixed(2)}</td>
-                  </tr>
-                ))
-              ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden">
+              <thead className={`${tableHead}`}>
                 <tr>
-                  <td colSpan="6" className="text-center text-gray-500 py-4">
-                    无数据
-                  </td>
+                  <th className="px-4 py-2 text-center font-medium uppercase">时间</th>
+                  <th className="px-4 py-2 text-center font-medium uppercase">代码</th>
+                  <th className="px-4 py-2 text-center font-medium uppercase">方向</th>
+                  <th className="px-4 py-2 text-center font-medium uppercase">价格</th>
+                  <th className="px-4 py-2 text-center font-medium uppercase">结果</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className={isDark ? "bg-gray-800 text-white" : "bg-white text-black"}>
+                {userOrders.length > 0 ? (
+                  userOrders.map((order, i) => (
+                    <tr key={i} className="cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800">
+                      <td className="px-4 py-2 text-center text-sm">{order.time}</td>
+                      <td className="px-4 py-2 text-center text-sm">{order.code}</td>
+                      <td className="px-4 py-2 text-center text-sm">{order.direction}</td>
+                      <td className="px-4 py-2 text-right text-sm pr-2">{parseFloat(order.price).toFixed(2)}</td>
+                      <td className={`px-4 py-2 text-center text-sm ${order.result === 'win' ? 'text-green-500' : 'text-red-500'}`}>{order.result === 'win' ? '盈利' : '亏损'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center text-gray-500 py-4">无数据</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </main>
 
         <aside className={`w-1/4 p-4 flex flex-col border-l ${isDark ? 'bg-[#1c1c1c]' : 'bg-gray-100'} chat-container`}>

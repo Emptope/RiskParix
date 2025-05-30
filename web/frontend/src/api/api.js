@@ -130,3 +130,26 @@ export async function sendChat({ message, history = [], stock_id = null }) {
  * @property {'user'|'assistant'} role - 角色
  * @property {string} content - 内容
  */
+
+export async function fetchOrderBook() {
+  try {
+    const res = await fetch("http://localhost:8000/api/order_book");
+    if (!res.ok) {
+      console.error("Failed to fetch order book:", res.status, await res.text());
+      return [];
+    }
+    return await res.json();
+  } catch (error) {
+    console.error("Error in fetchOrderBook:", error);
+    return [];
+  }
+}
+
+/**
+ * @typedef {Object} OrderBookItem
+ * @property {string} time - 交易时间
+ * @property {string} code - 股票代码
+ * @property {string} price - 交易价格
+ * @property {string} direction - 交易方向
+ * @property {string} result - 交易结果
+ */

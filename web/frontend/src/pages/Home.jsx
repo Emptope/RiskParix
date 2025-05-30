@@ -15,6 +15,7 @@ export default function Home() {
     pe_ratio: 100,
     pb_ratio: 10,
     sharpe_ratio: 0,
+    stock_code: "", 
   });
   const [tmpFilters, setTmpFilters] = useState(filters);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
@@ -57,6 +58,9 @@ export default function Home() {
   const filteredStocks = useMemo(() => {
     setDisplayCount(50); // 筛选变动时重置展示数量
     return allStocks.filter((item) => {
+      if (filters.stock_code && !item.code.toLowerCase().includes(filters.stock_code.toLowerCase())) {
+        return false;
+      }
       if (filters.year && String(item.year) !== String(filters.year))
         return false;
       if (Number(item.annual_return) < filters.annual_return) return false;
@@ -151,6 +155,17 @@ export default function Home() {
         >
           <h2 className="text-xl font-bold mb-4 text-center">筛选列表</h2>
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">股票代码</label>
+              <input
+                type="text"
+                value={tmpFilters.stock_code}
+                onChange={(e) => onFilterChange("stock_code", e.target.value)}
+                placeholder="输入股票代码搜索"
+                className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
+              />
+            </div>
+            
             <div>
               <label className="block text-sm font-medium mb-1">年份</label>
               <select

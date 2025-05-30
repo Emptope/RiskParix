@@ -5,6 +5,7 @@ import json
 from typing import Optional, Dict, List
 
 class DeepSeekClient:
+    # 修改 DeepSeekClient 类的 __init__ 方法，添加交易数据路径
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -23,22 +24,56 @@ class DeepSeekClient:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-
+    
         self.data_paths = {
             "kline": os.path.join("data", "day_klines", "all_klines.csv"),
             "metrics": os.path.join("data", "data_analysis", "all_metrics.csv"),
-            "order": os.path.join("data", "data_analysis", "trade_records.csv")
+            "order": os.path.join("data", "order_book", "order_book.csv"),
+            "user_summary": os.path.join("data", "order_book", "user_summary.csv")
         }
-
+    
         self.prompt_templates = {
             "system": (
-                "你是一名专业的股票分析师，擅长技术分析和基本面研究。"
-                "请根据用户提供的内容作出精准、分段、去重复的分析，避免赘述重复。"
+                "你是一名专业的交易策略分析师，擅长技术分析和交易策略研究。"
+                "请根据用户提供的交易记录和用户数据，分析用户的交易策略、风格和表现。"
+                "分析时请考虑以下几点：\n"
+                "1. 交易频率和时机选择\n"
+                "2. 买入/卖出决策模式\n"
+                "3. 盈亏比和胜率分析\n"
+                "4. 可能采用的技术指标或交易系统\n"
+                "5. 风险管理方式\n"
+                "6. 策略优化建议\n"
+                "请提供精准、分段、去重复的分析，避免赘述重复。"
                 "如提及价格或指标，请使用最新数据或注明需查数据。"
             ),
             "error": "【分析失败】{error_msg}",
             "empty_response": "未能获取有效分析结果，请尝试更具体的问题"
         }
+
+    # 修改 get_system_prompt 方法，添加交易数据信息
+    def get_system_prompt(self) -> Dict[str, str]:
+        return {
+            "role": "system",
+            "content": self.prompt_templates["system"].format(
+                stock_id=self.stock_id or "[未指定用户]",
+                kline_path=self.data_paths["kline"],
+                metrics_path=self.data_paths["metrics"],
+                order_path=self.data_paths["order"],
+                user_summary_path=self.data_paths["user_summary"]
+            )
+        }
+
+    # 添加新方法：分析交易策略
+    def analyze_trading_strategy(self, user_id: str) -> str:
+        prompt = (
+            f"分析用户 {user_id} 的交易策略和表现\n"
+            "要求:\n"
+            "1. 分析交易频率和时机选择\n"
+            "2. 识别可能使用的技术指标或交易系统\n"
+            "3. 评估风险管理方式\n"
+            "4. 提供策略优化建议"
+        )
+        return self.chat(prompt)
 
     def update_prompt_template(self, template_type: str, new_template: str) -> None:
         if template_type in self.prompt_templates:
