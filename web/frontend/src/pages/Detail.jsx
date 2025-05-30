@@ -240,7 +240,7 @@ export default function Detail() {
           content: msg.content,
         }));
 
-      const res = await fetch("http://localhost:8000/api/chat/stream", {
+      const res = await fetch("http://localhost:8000/api/chat/stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

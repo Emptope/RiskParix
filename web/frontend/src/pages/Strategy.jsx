@@ -82,7 +82,7 @@ export default function Strategy() {
           content: msg.content,
         }));
   
-      const res = await fetch('http://localhost:8000/api/chat/stream', {
+      const res = await fetch('http://localhost:8000/api/chat/strategy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

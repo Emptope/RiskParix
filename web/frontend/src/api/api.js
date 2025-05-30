@@ -87,7 +87,8 @@ export async function fetchUsers() {
 
 export async function sendChat({ message, history = [], stock_id = null }) {
   try {
-    const res = await fetch("http://localhost:8000/api/chat", {
+    endpoint = "stock" | "strategy"
+    const res = await fetch(`http://localhost:8000/api/${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history, stock_id })
