@@ -552,7 +552,7 @@ export default function Strategy() {
               </div>
               <div>
                 <h2 className={`text-lg font-bold ${colors.textPrimary}`}>
-                  AI 策略分析助手
+                  AI 分析助手
                 </h2>
                 <p className={`${colors.textMuted} text-xs`}>DeepSeek 驱动</p>
               </div>
