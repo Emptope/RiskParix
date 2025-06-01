@@ -964,7 +964,7 @@ export default function Detail() {
                         } prose-code:${colors.textPrimary}`}
                       >
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.content}
+                          {msg.content || "分析中"}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -973,7 +973,7 @@ export default function Detail() {
               )}
 
               {/* 加载状态 - 优化动画 */}
-              {isLoading && (
+              {isLoading && (!messages[messages.length-1] || messages[messages.length-1]?.role !== 'ai' || messages[messages.length-1]?.content === '') && (
                 <div className="flex justify-start">
                   <div
                     className={`${colors.secondary} ${colors.border} border px-4 py-3 rounded-lg rounded-bl-sm ${colors.shadow}`}
