@@ -7,7 +7,7 @@ import debounce from "lodash/debounce";
 export default function Home() {
   const [allStocks, setAllStocks] = useState([]);
   const [displayStocks, setDisplayStocks] = useState([]);
-  const [displayCount, setDisplayCount] = useState(50); // 初始展示数量
+  const [displayCount, setDisplayCount] = useState(50);
   const [filters, setFilters] = useState({
     year: "",
     annual_return: 0,
@@ -22,6 +22,49 @@ export default function Home() {
 
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const isDark = theme === "dark";
+
+  // 颜色定义 - 与Detail.jsx和Strategy.jsx保持一致
+  const colors = {
+    // 背景色
+    primary: isDark ? "bg-gray-950" : "bg-gray-50",
+    secondary: isDark ? "bg-gray-900" : "bg-white",
+    tertiary: isDark ? "bg-gray-800" : "bg-gray-100",
+    quaternary: isDark ? "bg-gray-700" : "bg-gray-50",
+
+    // 文字色
+    textPrimary: isDark ? "text-gray-100" : "text-gray-900",
+    textSecondary: isDark ? "text-gray-300" : "text-gray-600",
+    textMuted: isDark ? "text-gray-400" : "text-gray-500",
+    textDisabled: isDark ? "text-gray-600" : "text-gray-400",
+
+    // 边框色
+    border: isDark ? "border-gray-700" : "border-gray-200",
+    borderLight: isDark ? "border-gray-800" : "border-gray-100",
+    borderStrong: isDark ? "border-gray-600" : "border-gray-300",
+
+    // 强调色
+    accent: isDark ? "bg-blue-600" : "bg-blue-600",
+    accentHover: isDark ? "hover:bg-blue-500" : "hover:bg-blue-700",
+    accentLight: isDark ? "bg-blue-900/30" : "bg-blue-50",
+    accentText: isDark ? "text-blue-400" : "text-blue-600",
+
+    // 状态色
+    success: isDark ? "text-emerald-400" : "text-emerald-600",
+    successBg: isDark ? "bg-emerald-900/30" : "bg-emerald-50",
+    danger: isDark ? "text-red-400" : "text-red-600",
+    dangerBg: isDark ? "bg-red-900/30" : "bg-red-50",
+    warning: isDark ? "text-amber-400" : "text-amber-600",
+    warningBg: isDark ? "bg-amber-900/30" : "bg-amber-50",
+
+    // 阴影
+    shadow: isDark
+      ? "shadow-lg shadow-black/25"
+      : "shadow-sm shadow-gray-200/50",
+    shadowStrong: isDark
+      ? "shadow-xl shadow-black/40"
+      : "shadow-lg shadow-gray-300/20",
+  };
 
   useEffect(() => {
     async function load() {
@@ -56,7 +99,7 @@ export default function Home() {
   };
 
   const filteredStocks = useMemo(() => {
-    setDisplayCount(50); // 筛选变动时重置展示数量
+    setDisplayCount(50);
     return allStocks.filter((item) => {
       if (filters.stock_code && !item.code.toLowerCase().includes(filters.stock_code.toLowerCase())) {
         return false;
@@ -107,12 +150,8 @@ export default function Home() {
 
   const services = ["soufflé服务器", "数据库", "baostock实时行情"];
   const years = Array.from({ length: 2025 - 2014 }, (_, i) => 2014 + i);
-
-  const isDark = theme === "dark";
-  const baseBg = isDark ? "bg-gray-900 text-white" : "bg-white text-black";
-  const cardBg = isDark ? "bg-gray-800 text-white" : "bg-white text-black";
-  const tableHead = "bg-[#1e3a8a] text-white font-bold";
   const sliderColor = isDark ? "bg-gray-600" : "bg-gray-300";
+  const tableHead = "bg-[#1e3a8a] text-white font-bold";
 
   const columnConfig = [
     ["证券代码", "code"],
@@ -126,157 +165,256 @@ export default function Home() {
   ];
 
   return (
-    <div className={`flex flex-col h-screen ${baseBg}`}>
-      <div className="flex justify-end p-2">
-        <button
-          onClick={toggleTheme}
-          className="border px-3 py-1 rounded text-sm"
-        >
-          切换为 {theme === "light" ? "深色" : "浅色"} 模式
-        </button>
-      </div>
-      <div className="flex flex-1 overflow-hidden">
-        <aside className={`w-56 p-4 flex flex-col rounded-xl m-2 ${cardBg}`}>
-          <h2 className="text-xl font-bold mb-4 text-center">服务列表</h2>
-          <ul className="space-y-2 flex-1 overflow-y-auto">
-            {services.map((srv) => (
-              <li
-                key={srv}
-                className="p-2 hover:bg-blue-700 rounded cursor-pointer"
-              >
-                {srv}
-              </li>
-            ))}
-          </ul>
-        </aside>
-
-        <aside
-          className={`w-72 border-r border-gray-300 overflow-y-auto rounded-xl m-2 p-4 ${cardBg}`}
-        >
-          <h2 className="text-xl font-bold mb-4 text-center">筛选列表</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">股票代码</label>
-              <input
-                type="text"
-                value={tmpFilters.stock_code}
-                onChange={(e) => onFilterChange("stock_code", e.target.value)}
-                placeholder="输入股票代码搜索"
-                className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">年份</label>
-              <select
-                value={tmpFilters.year}
-                onChange={(e) => onFilterChange("year", e.target.value)}
-                className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
-              >
-                <option value="">选择年份</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {[
-              ["年化收益率 ≥", "annual_return", 0, 50, "%"],
-              ["最大回撤 ≤", "max_drawdown", 0, 100, "%"],
-              ["市盈率 ≤", "pe_ratio", 0, 100, ""],
-              ["市净率 ≤", "pb_ratio", 0, 10, ""],
-              ["夏普比率 ≥", "sharpe_ratio", 0, 5, ""],
-            ].map(([label, key, min, max, suffix]) => (
-              <div key={key}>
-                <label className="block text-sm font-medium mb-1">
-                  {label} {formatNumber(tmpFilters[key])}
-                  {suffix}
-                </label>
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  step={key === "pb_ratio" || key === "sharpe_ratio" ? 0.1 : 1}
-                  value={tmpFilters[key]}
-                  onChange={(e) => onFilterChange(key, Number(e.target.value))}
-                  className={`w-full h-2 ${sliderColor} rounded-lg appearance-none cursor-pointer`}
-                />
-              </div>
-            ))}
+    <div
+      className={`flex flex-col h-screen ${colors.primary} ${colors.textPrimary} transition-colors duration-300`}
+    >
+      {/* 顶部导航栏 */}
+      <div
+        className={`${colors.secondary} ${colors.borderStrong} border-b px-6 py-4 ${colors.shadow}`}
+      >
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <h1 className={`text-xl font-bold ${colors.textPrimary}`}>
+              股票筛选
+            </h1>
           </div>
-        </aside>
+          <button
+            onClick={toggleTheme}
+            className={`${colors.accent} ${colors.accentHover} text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 ${colors.shadow}`}
+          >
+            {isDark ? "🌞 浅色" : "🌙 深色"}
+          </button>
+        </div>
+      </div>
 
-        <main
-          className={`flex-1 p-4 overflow-auto rounded-xl m-2 ${cardBg}`}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左侧服务列表面板 */}
+        <div className={`w-[15%] ${colors.tertiary} overflow-y-auto`}>
+          <div className="p-6 space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-10 h-10 ${colors.accent} rounded-lg flex items-center justify-center`}
+                >
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className={`text-xl font-bold ${colors.textPrimary}`}>
+                    服务列表
+                  </h2>
+                  <p className={`${colors.textMuted} text-sm`}>可用服务</p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`${colors.secondary} ${colors.border} border rounded-lg p-6 ${colors.shadow} transition-all duration-200`}
+            >
+              <ul className="space-y-2">
+                {services.map((srv) => (
+                  <li
+                    key={srv}
+                    className={`p-3 ${colors.quaternary} rounded-lg cursor-pointer hover:${colors.accentLight} transition-colors duration-150 ${colors.textPrimary}`}
+                  >
+                    {srv}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* 中间筛选面板 */}
+        <div className={`w-[20%] ${colors.secondary} overflow-y-auto`}>
+          <div className="p-6 space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-10 h-10 ${colors.accentLight} ${colors.accentText} rounded-lg flex items-center justify-center`}
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className={`text-xl font-bold ${colors.textPrimary}`}>
+                    筛选列表
+                  </h2>
+                  <p className={`${colors.textMuted} text-sm`}>设置筛选条件</p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`${colors.secondary} ${colors.border} border rounded-lg p-6 ${colors.shadow} transition-all duration-200`}
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${colors.textSecondary}`}>股票代码</label>
+                  <input
+                    type="text"
+                    value={tmpFilters.stock_code}
+                    onChange={(e) => onFilterChange("stock_code", e.target.value)}
+                    placeholder="输入股票代码搜索"
+                    className={`w-full border ${colors.border} px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${colors.textSecondary}`}>年份</label>
+                  <select
+                    value={tmpFilters.year}
+                    onChange={(e) => onFilterChange("year", e.target.value)}
+                    className={`w-full border ${colors.border} px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+                  >
+                    <option value="">选择年份</option>
+                    {years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {[
+                  ["年化收益率 ≥", "annual_return", 0, 50, "%"],
+                  ["最大回撤 ≤", "max_drawdown", 0, 100, "%"],
+                  ["市盈率 ≤", "pe_ratio", 0, 100, ""],
+                  ["市净率 ≤", "pb_ratio", 0, 10, ""],
+                  ["夏普比率 ≥", "sharpe_ratio", 0, 5, ""],
+                ].map(([label, key, min, max, suffix]) => (
+                  <div key={key}>
+                    <label className={`block text-sm font-medium mb-1 ${colors.textSecondary}`}>
+                      {label} {formatNumber(tmpFilters[key])}
+                      {suffix}
+                    </label>
+                    <input
+                      type="range"
+                      min={min}
+                      max={max}
+                      step={key === "pb_ratio" || key === "sharpe_ratio" ? 0.1 : 1}
+                      value={tmpFilters[key]}
+                      onChange={(e) => onFilterChange(key, Number(e.target.value))}
+                      className={`w-full h-2 ${sliderColor} rounded-lg appearance-none cursor-pointer accent-blue-600`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 右侧股票列表面板 */}
+        <div
+          className={`w-[65%] ${colors.tertiary} overflow-y-auto`}
           onScroll={handleScroll}
         >
-          <h2 className="text-xl font-bold mb-4 text-center">股票列表</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 rounded-xl overflow-hidden">
-              <thead className={`${tableHead}`}>
-                <tr>
-                  {columnConfig.map(([label, key]) => (
-                    <th
-                      key={key}
-                      onClick={() => handleSort(key)}
-                      className="px-4 py-2 text-center font-medium uppercase cursor-pointer select-none"
-                    >
-                      <div className="inline-flex items-center">
-                        <span>{label}</span>
-                        <span style={{ fontSize: "0.6rem" }}>
-                          {sortConfig.key === key
-                            ? sortConfig.direction === "asc"
-                              ? " ▲"
-                              : " ▼"
-                            : " △"}
-                        </span>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody
-                className={
-                  isDark ? "bg-gray-800 text-white" : "bg-white text-black"
-                }
-              >
-                {displayStocks.map((stk) => (
-                  <tr
-                    key={stk.code + stk.year}
-                    className="cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
-                    onClick={() => navigate(`/detail/${stk.code}`)}
+          <div className="p-6 space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-10 h-10 ${colors.accentLight} ${colors.accentText} rounded-lg flex items-center justify-center`}
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
                   >
-                    <td className="px-4 py-2 text-center text-sm">
-                      {stk.code}
-                    </td>
-                    <td className="px-4 py-2 text-center text-sm">
-                      {stk.name}
-                    </td>
-                    <td className="px-4 py-2 text-center text-sm">
-                      {stk.year}
-                    </td>
-                    <td className="px-4 py-2 text-center text-sm">
-                      {formatNumber(stk.annual_return)}
-                    </td>
-                    <td className="px-4 py-2 text-center text-sm">
-                      {formatNumber(stk.max_drawdown)}
-                    </td>
-                    <td className="px-4 py-2 text-center text-sm">
-                      {formatNumber(stk.pe_ratio)}
-                    </td>
-                    <td className="px-4 py-2 text-center text-sm">
-                      {formatNumber(stk.pb_ratio)}
-                    </td>
-                    <td className="px-4 py-2 text-center text-sm">
-                      {formatNumber(stk.sharpe_ratio)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 className={`text-xl font-bold ${colors.textPrimary}`}>
+                    股票列表
+                  </h2>
+                  <p className={`${colors.textMuted} text-sm`}>
+                    共 {filteredStocks.length} 条记录
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`${colors.secondary} ${colors.border} border rounded-lg overflow-hidden ${colors.shadow} transition-all duration-200`}
+            >
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className={`${tableHead}`}>
+                    <tr>
+                      {columnConfig.map(([label, key]) => (
+                        <th
+                          key={key}
+                          onClick={() => handleSort(key)}
+                          className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider cursor-pointer select-none"
+                        >
+                          <div className="inline-flex items-center">
+                            <span>{label}</span>
+                            <span className="ml-1">
+                              {sortConfig.key === key
+                                ? sortConfig.direction === "asc"
+                                  ? " ▲"
+                                  : " ▼"
+                                : " △"}
+                            </span>
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody
+                    className={`${colors.secondary} divide-y ${colors.borderLight}`}
+                  >
+                    {displayStocks.map((stk) => (
+                      <tr
+                        key={stk.code + stk.year}
+                        className={`cursor-pointer transition-colors duration-150 hover:${isDark ? 'bg-gray-700/50' : 'bg-gray-100/50'}`}
+                        onClick={() => navigate(`/detail/${stk.code}`)}
+                      >
+                        <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
+                          {stk.code}
+                        </td>
+                        <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
+                          {stk.name}
+                        </td>
+                        <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
+                          {stk.year}
+                        </td>
+                        <td className={`px-4 py-3 text-center text-sm ${Number(stk.annual_return) >= 0 ? colors.success : colors.danger}`}>
+                          {formatNumber(stk.annual_return)}
+                        </td>
+                        <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
+                          {formatNumber(stk.max_drawdown)}
+                        </td>
+                        <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
+                          {formatNumber(stk.pe_ratio)}
+                        </td>
+                        <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
+                          {formatNumber(stk.pb_ratio)}
+                        </td>
+                        <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
+                          {formatNumber(stk.sharpe_ratio)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
