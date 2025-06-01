@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchStockDetail } from "../api/api";
+import { fetchStockDetail, fetchStockInfo } from "../api/api";
 import ReactECharts from "echarts-for-react";
 import Papa from "papaparse";
 import groupBy from "lodash/groupBy";
@@ -23,6 +23,7 @@ export default function Detail() {
   const textareaRef = useRef(null);
 
   const [detail, setDetail] = useState(null);
+  const [stockInfo, setStockInfo] = useState(null);
   const [klineData, setKlineData] = useState([]);
   const [period, setPeriod] = useState("日K");
 
@@ -35,6 +36,7 @@ export default function Detail() {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
+    // 获取K线数据
     fetchStockDetail(code)
       .then((data) => {
         setDetail(data);
@@ -46,6 +48,15 @@ export default function Detail() {
       })
       .catch(() => {
         fetchKlineFromCSV(code);
+      });
+
+    // 获取股票基本信息
+    fetchStockInfo(code)
+      .then((info) => {
+        setStockInfo(info);
+      })
+      .catch((err) => {
+        console.error("获取股票信息失败:", err);
       });
   }, [code]);
 
@@ -316,61 +327,291 @@ export default function Detail() {
         </button>
       </div>
       <div className="flex flex-1 overflow-hidden">
-        {/* 左侧估值信息 */}
-        <div className={`w-1/4 p-4 overflow-y-auto ${sectionBg}`}>
-          <h2 className="text-lg font-semibold mb-2">估值信息</h2>
-          {detail ? (
-            <div className="space-y-2">
-              <div>
-                <label className="block text-sm">FCFE估值</label>
-                <input
-                  className={inputStyle}
-                  value={detail.fcfe || ""}
-                  readOnly
-                />
+        {/* 左侧股票信息 */}
+        <div className={`w-1/4 p-6 overflow-y-auto ${sectionBg}`}>
+          {/* 标题区域 */}
+          <div className="mb-6">
+            <h2 className="text-xl font-bold mb-1 flex items-center">
+              <svg
+                className="w-5 h-5 mr-2 text-blue-500"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              股票信息
+            </h2>
+            <div
+              className={`h-1 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500`}
+            ></div>
+          </div>
+
+          {stockInfo ? (
+            <div className="space-y-6">
+              {/* 基本信息卡片 */}
+              <div
+                className={`p-4 rounded-xl border ${
+                  isDark
+                    ? "bg-[#1a1a1a] border-gray-700"
+                    : "bg-white border-gray-200"
+                } shadow-sm`}
+              >
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  基本信息
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-600">
+                      股票代码
+                    </label>
+                    <div
+                      className={`px-3 py-1 rounded-lg text-sm font-mono font-bold ${
+                        isDark
+                          ? "bg-blue-900 text-blue-200"
+                          : "bg-blue-50 text-blue-700"
+                      }`}
+                    >
+                      {stockInfo.code}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-600">
+                      股票名称
+                    </label>
+                    <div className="text-sm font-semibold">
+                      {stockInfo.name}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-600">
+                      年份
+                    </label>
+                    <div
+                      className={`px-2 py-1 rounded text-sm font-medium ${
+                        isDark
+                          ? "bg-gray-700 text-gray-200"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {stockInfo.year}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm">FCFF估值</label>
-                <input
-                  className={inputStyle}
-                  value={detail.fcff || ""}
-                  readOnly
-                />
+
+              {/* 财务指标卡片 */}
+              <div
+                className={`p-4 rounded-xl border ${
+                  isDark
+                    ? "bg-[#1a1a1a] border-gray-700"
+                    : "bg-white border-gray-200"
+                } shadow-sm`}
+              >
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center">
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                  财务指标
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {/* 年涨跌幅 */}
+                  <div
+                    className={`p-3 rounded-lg ${
+                      isDark ? "bg-[#0f0f0f]" : "bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-medium text-gray-500">
+                        年涨跌幅
+                      </label>
+                      <div
+                        className={`px-2 py-1 rounded text-xs font-bold ${
+                          stockInfo.annual_return > 0
+                            ? "bg-green-100 text-green-700"
+                            : stockInfo.annual_return < 0
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {stockInfo.annual_return
+                          ? `${(stockInfo.annual_return * 100).toFixed(2)}%`
+                          : "--"}
+                      </div>
+                    </div>
+                    <div
+                      className={`h-2 rounded-full ${
+                        isDark ? "bg-gray-700" : "bg-gray-200"
+                      } overflow-hidden`}
+                    >
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          stockInfo.annual_return > 0
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(
+                            Math.abs(stockInfo.annual_return * 100),
+                            100
+                          )}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* 最大回撤 */}
+                  <div
+                    className={`p-3 rounded-lg ${
+                      isDark ? "bg-[#0f0f0f]" : "bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-medium text-gray-500">
+                        最大回撤
+                      </label>
+                      <div className="px-2 py-1 rounded text-xs font-bold bg-orange-100 text-orange-700">
+                        {stockInfo.max_drawdown
+                          ? `${(stockInfo.max_drawdown * 100).toFixed(2)}%`
+                          : "--"}
+                      </div>
+                    </div>
+                    <div
+                      className={`h-2 rounded-full ${
+                        isDark ? "bg-gray-700" : "bg-gray-200"
+                      } overflow-hidden`}
+                    >
+                      <div
+                        className="h-full bg-orange-500 transition-all duration-300"
+                        style={{
+                          width: `${Math.min(
+                            Math.abs(stockInfo.max_drawdown * 100),
+                            100
+                          )}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* 估值指标 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div
+                      className={`p-3 rounded-lg text-center ${
+                        isDark ? "bg-[#0f0f0f]" : "bg-gray-50"
+                      }`}
+                    >
+                      <div className="text-xs font-medium text-gray-500 mb-1">
+                        市盈率
+                      </div>
+                      <div className="text-lg font-bold">
+                        {stockInfo.pe_ratio
+                          ? stockInfo.pe_ratio.toFixed(1)
+                          : "--"}
+                      </div>
+                      <div className="text-xs text-gray-400">P/E</div>
+                    </div>
+                    <div
+                      className={`p-3 rounded-lg text-center ${
+                        isDark ? "bg-[#0f0f0f]" : "bg-gray-50"
+                      }`}
+                    >
+                      <div className="text-xs font-medium text-gray-500 mb-1">
+                        市净率
+                      </div>
+                      <div className="text-lg font-bold">
+                        {stockInfo.pb_ratio
+                          ? stockInfo.pb_ratio.toFixed(1)
+                          : "--"}
+                      </div>
+                      <div className="text-xs text-gray-400">P/B</div>
+                    </div>
+                  </div>
+
+                  {/* 夏普比率 */}
+                  <div
+                    className={`p-3 rounded-lg ${
+                      isDark ? "bg-[#0f0f0f]" : "bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-medium text-gray-500">
+                        夏普比率
+                      </label>
+                      <div
+                        className={`px-2 py-1 rounded text-xs font-bold ${
+                          stockInfo.sharpe_ratio > 1
+                            ? "bg-green-100 text-green-700"
+                            : stockInfo.sharpe_ratio > 0.5
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {stockInfo.sharpe_ratio
+                          ? stockInfo.sharpe_ratio.toFixed(3)
+                          : "--"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-lg font-semibold mt-4 mb-2">金融参数</h2>
-              <div>
-                <label className="block text-sm">年化收益率</label>
-                <input
-                  className={inputStyle}
-                  value={detail.annualized_return || ""}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label className="block text-sm">最大回撤</label>
-                <input
-                  className={inputStyle}
-                  value={detail.max_drawdown || ""}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label className="block text-sm">夏普比率</label>
-                <input
-                  className={inputStyle}
-                  value={detail.sharpe_ratio || ""}
-                  readOnly
-                />
-              </div>
-              <h2 className="text-lg font-semibold mt-4 mb-2">相关股票</h2>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                {detail.related_stocks?.map((stock, idx) => (
-                  <li key={idx}>{stock}</li>
-                ))}
-              </ul>
+
+              {/* 价格信息卡片 */}
+              {klineData && klineData.length > 0 && (
+                <div
+                  className={`p-4 rounded-xl border ${
+                    isDark
+                      ? "bg-[#1a1a1a] border-gray-700"
+                      : "bg-white border-gray-200"
+                  } shadow-sm`}
+                >
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    最新价格
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold mb-1">
+                        ¥{klineData[klineData.length - 1]?.close?.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {klineData[klineData.length - 1]?.date}
+                      </div>
+                    </div>
+
+                    {/* 价格变化指示器 */}
+                    <div
+                      className={`p-2 rounded-lg text-center ${
+                        isDark ? "bg-[#0f0f0f]" : "bg-gray-50"
+                      }`}
+                    >
+                      <div className="text-xs text-gray-500 mb-1">收盘价</div>
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span className="text-sm font-medium">实时更新</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="text-gray-400 text-sm">暂无详细估值信息</div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
+              <div className="text-gray-400 text-sm">正在加载股票信息...</div>
+            </div>
           )}
         </div>
 
@@ -427,9 +668,7 @@ export default function Detail() {
                       isDark ? "prose-invert text-gray-100" : "text-gray-900"
                     }`}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                    >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.content}
                     </ReactMarkdown>
                   </div>

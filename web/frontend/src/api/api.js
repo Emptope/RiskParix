@@ -1,110 +1,185 @@
-export async function fetchStocks(filters) {
+// 基础配置
+const API_BASE_URL = "http://localhost:8000/api";
+
+// 通用错误处理函数
+const handleApiError = (error, context) => {
+  console.error(`Error in ${context}:`, error);
+  return null;
+};
+
+// 通用fetch包装函数
+const apiRequest = async (url, options = {}) => {
   try {
-    const res = await fetch("http://localhost:8000/api/stocks", {
-      method: "GET"
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers
+      },
+      ...options
     });
-
-    if (!res.ok) {
-      console.error("Failed to fetch stocks:", res.status, await res.text());
-      return [];
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`API request failed for ${url}:`, error);
+    throw error;
+  }
+};
 
-    const allItems = await res.json();
+/**
+ * 获取股票列表并应用过滤器
+ * @param {Object} filters - 过滤条件
+ * @returns {Promise<StockItem[]>} 股票列表
+ */
+export async function fetchStocks(filters = {}) {
+  try {
+    const allItems = await apiRequest(`${API_BASE_URL}/stocks`);
 
-    // Filter using the raw keys from the API response
+    // 应用过滤器
     const filteredItems = allItems.filter(item => {
-      if (filters.year && filters.year !== '选择年份' && item["年份"] != filters.year) { // Use loose equality for year as it might be string vs number initially
+      if (filters.year && filters.year !== '选择年份' && item["年份"] != filters.year) {
         return false;
       }
 
-      // Ensure item properties are numbers before comparison
       const annualReturn = parseFloat(item["年涨跌幅"]);
       const maxDrawdown = parseFloat(item["最大回撤"]);
       const peRatio = parseFloat(item["市盈率"]);
       const pbRatio = parseFloat(item["市净率"]);
       const sharpeRatio = parseFloat(item["夏普比率-普通收益率-日-一年定存利率"]);
 
-      // Initial filter for annual_return is 0.
-      if (!isNaN(annualReturn) && annualReturn < parseFloat(filters.annual_return)) return false;
-      // Initial filter for max_drawdown is 100.
-      if (!isNaN(maxDrawdown) && maxDrawdown > parseFloat(filters.max_drawdown)) return false;
-      // Initial filter for pe_ratio is 100.
-      if (!isNaN(peRatio) && peRatio > parseFloat(filters.pe_ratio)) return false;
-      // Initial filter for pb_ratio is 10.
-      if (!isNaN(pbRatio) && pbRatio > parseFloat(filters.pb_ratio)) return false;
-      // Initial filter for sharpe_ratio is 0.
-      if (!isNaN(sharpeRatio) && sharpeRatio < parseFloat(filters.sharpe_ratio)) return false;
+      if (!isNaN(annualReturn) && annualReturn < parseFloat(filters.annual_return || 0)) return false;
+      if (!isNaN(maxDrawdown) && maxDrawdown > parseFloat(filters.max_drawdown || 100)) return false;
+      if (!isNaN(peRatio) && peRatio > parseFloat(filters.pe_ratio || 100)) return false;
+      if (!isNaN(pbRatio) && pbRatio > parseFloat(filters.pb_ratio || 10)) return false;
+      if (!isNaN(sharpeRatio) && sharpeRatio < parseFloat(filters.sharpe_ratio || 0)) return false;
       
       return true;
     });
 
-    // Map to the desired frontend structure
+    // 映射到前端结构
     return filteredItems.map(item => ({
-      code: item["证券代码"], //
-      name: item["证券名称"], //
-      year: Number(item["年份"]), // Ensure year is a number
-      annual_return: parseFloat(item["年涨跌幅"]), //
-      max_drawdown: parseFloat(item["最大回撤"]), //
-      pe_ratio: parseFloat(item["市盈率"]), //
-      pb_ratio: parseFloat(item["市净率"]), //
-      sharpe_ratio: parseFloat(item["夏普比率-普通收益率-日-一年定存利率"]) //
+      code: item["证券代码"],
+      name: item["证券名称"],
+      year: Number(item["年份"]),
+      annual_return: parseFloat(item["年涨跌幅"]),
+      max_drawdown: parseFloat(item["最大回撤"]),
+      pe_ratio: parseFloat(item["市盈率"]),
+      pb_ratio: parseFloat(item["市净率"]),
+      sharpe_ratio: parseFloat(item["夏普比率-普通收益率-日-一年定存利率"])
     }));
 
   } catch (error) {
-    console.error("Error in fetchStocks:", error);
+    handleApiError(error, "fetchStocks");
     return [];
   }
 }
 
+/**
+ * 获取单个股票的基本信息
+ * @param {string} code - 股票代码
+ * @returns {Promise<StockItem|null>} 股票信息
+ */
+export async function fetchStockInfo(code) {
+  try {
+    const allItems = await apiRequest(`${API_BASE_URL}/stocks`);
+    
+    const stockInfo = allItems.find(item => item["证券代码"] === code);
+    
+    if (!stockInfo) {
+      console.warn(`Stock with code ${code} not found`);
+      return null;
+    }
+
+    return {
+      code: stockInfo["证券代码"],
+      name: stockInfo["证券名称"],
+      year: Number(stockInfo["年份"]),
+      annual_return: parseFloat(stockInfo["年涨跌幅"]),
+      max_drawdown: parseFloat(stockInfo["最大回撤"]),
+      pe_ratio: parseFloat(stockInfo["市盈率"]),
+      pb_ratio: parseFloat(stockInfo["市净率"]),
+      sharpe_ratio: parseFloat(stockInfo["夏普比率-普通收益率-日-一年定存利率"])
+    };
+
+  } catch (error) {
+    handleApiError(error, "fetchStockInfo");
+    return null;
+  }
+}
+
+/**
+ * 获取股票K线数据
+ * @param {string} code - 股票代码
+ * @returns {Promise<{kline_data: KlineItem[]}}>} K线数据
+ */
 export async function fetchStockDetail(code) {
   try {
-    const res = await fetch(`http://localhost:8000/api/kline/${code}`);
-    if (!res.ok) {
-      console.error("Failed to fetch kline data:", res.status, await res.text());
-      return { kline_data: [] }; // Consistent error handling
-    }
-    const kline_data = await res.json();
+    const kline_data = await apiRequest(`${API_BASE_URL}/kline/${code}`);
     return { kline_data };
-  } catch (err) {
-    console.error("fetchStockDetail error:", err);
+  } catch (error) {
+    handleApiError(error, "fetchStockDetail");
     return { kline_data: [] };
   }
 }
 
+/**
+ * 获取用户列表
+ * @returns {Promise<Array>} 用户列表
+ */
 export async function fetchUsers() {
   try {
-    const res = await fetch("http://localhost:8000/api/users");
-    if (!res.ok) {
-      console.error("Failed to fetch users:", res.status, await res.text());
-      return [];
-    }
-    return await res.json();
+    return await apiRequest(`${API_BASE_URL}/users`);
   } catch (error) {
-    console.error("Error in fetchUsers:", error);
+    handleApiError(error, "fetchUsers");
     return [];
   }
 }
 
-export async function sendChat({ message, history = [], stock_id = null }) {
+/**
+ * 获取订单簿数据
+ * @returns {Promise<OrderBookItem[]>} 订单簿列表
+ */
+export async function fetchOrderBook() {
   try {
-    endpoint = "stock" | "strategy"
-    const res = await fetch(`http://localhost:8000/api/${endpoint}`, {
+    return await apiRequest(`${API_BASE_URL}/order_book`);
+  } catch (error) {
+    handleApiError(error, "fetchOrderBook");
+    return [];
+  }
+}
+
+/**
+ * 发送聊天消息
+ * @param {Object} params - 聊天参数
+ * @param {string} params.message - 消息内容
+ * @param {ChatMessage[]} params.history - 聊天历史
+ * @param {string|null} params.stock_id - 股票ID
+ * @param {string} params.endpoint - 聊天端点 ('stock' 或 'strategy')
+ * @returns {Promise<string>} 响应消息
+ */
+export async function sendChat({ message, history = [], stock_id = null, endpoint = "stock" }) {
+  try {
+    const validEndpoints = ["stock", "strategy"];
+    if (!validEndpoints.includes(endpoint)) {
+      throw new Error(`Invalid endpoint: ${endpoint}. Must be one of: ${validEndpoints.join(", ")}`);
+    }
+
+    const data = await apiRequest(`${API_BASE_URL}/chat/${endpoint}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history, stock_id })
     });
-    if (!res.ok) {
-      console.error("Failed to send chat message:", res.status, await res.text());
-      return "Error sending message"; 
-    }
-    const data = await res.json();
+    
     return data.response;
   } catch (error) {
-    console.error("Error in sendChat:", error);
+    handleApiError(error, "sendChat");
     return "Error sending message";
   }
 }
 
+// TypeScript类型定义（JSDoc格式）
 /**
  * @typedef {Object} StockItem
  * @property {string} code - 股票代码
@@ -131,20 +206,6 @@ export async function sendChat({ message, history = [], stock_id = null }) {
  * @property {'user'|'assistant'} role - 角色
  * @property {string} content - 内容
  */
-
-export async function fetchOrderBook() {
-  try {
-    const res = await fetch("http://localhost:8000/api/order_book");
-    if (!res.ok) {
-      console.error("Failed to fetch order book:", res.status, await res.text());
-      return [];
-    }
-    return await res.json();
-  } catch (error) {
-    console.error("Error in fetchOrderBook:", error);
-    return [];
-  }
-}
 
 /**
  * @typedef {Object} OrderBookItem
