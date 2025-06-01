@@ -30,32 +30,32 @@ export default function Strategy() {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // 颜色定义 - 与Detail.jsx保持完全一致
+  // 颜色定义
   const colors = {
-    // 背景色 - 使用更深的背景提高对比度
+    // 背景色
     primary: isDark ? "bg-gray-950" : "bg-gray-50",
     secondary: isDark ? "bg-gray-900" : "bg-white",
     tertiary: isDark ? "bg-gray-800" : "bg-gray-100",
     quaternary: isDark ? "bg-gray-700" : "bg-gray-50",
 
-    // 文字色 - 提高可读性
+    // 文字色
     textPrimary: isDark ? "text-gray-100" : "text-gray-900",
     textSecondary: isDark ? "text-gray-300" : "text-gray-600",
     textMuted: isDark ? "text-gray-400" : "text-gray-500",
     textDisabled: isDark ? "text-gray-600" : "text-gray-400",
 
-    // 边框色 - 清晰分界
+    // 边框色
     border: isDark ? "border-gray-700" : "border-gray-200",
     borderLight: isDark ? "border-gray-800" : "border-gray-100",
     borderStrong: isDark ? "border-gray-600" : "border-gray-300",
 
-    // 强调色 - 保持品牌一致性但提高对比度
+    // 强调色
     accent: isDark ? "bg-blue-600" : "bg-blue-600",
     accentHover: isDark ? "hover:bg-blue-500" : "hover:bg-blue-700",
     accentLight: isDark ? "bg-blue-900/30" : "bg-blue-50",
     accentText: isDark ? "text-blue-400" : "text-blue-600",
 
-    // 状态色 - 增强对比
+    // 状态色
     success: isDark ? "text-emerald-400" : "text-emerald-600",
     successBg: isDark ? "bg-emerald-900/30" : "bg-emerald-50",
     danger: isDark ? "text-red-400" : "text-red-600",
@@ -63,7 +63,7 @@ export default function Strategy() {
     warning: isDark ? "text-amber-400" : "text-amber-600",
     warningBg: isDark ? "bg-amber-900/30" : "bg-amber-50",
 
-    // 阴影 - 适合深色模式
+    // 阴影
     shadow: isDark
       ? "shadow-lg shadow-black/25"
       : "shadow-sm shadow-gray-200/50",

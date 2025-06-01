@@ -24,7 +24,7 @@ export default function Home() {
   const navigate = useNavigate();
   const isDark = theme === "dark";
 
-  // 颜色定义 - 与Detail.jsx和Strategy.jsx保持一致
+  // 颜色定义
   const colors = {
     // 背景色
     primary: isDark ? "bg-gray-950" : "bg-gray-50",
