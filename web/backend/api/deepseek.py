@@ -125,19 +125,6 @@ class DeepSeekClient:
     @staticmethod
     def _post_process(txt: str) -> str:
         """
-        对 LLM 原始输出做轻量排版：修复标题/列表、收尾多余换行等。
+        输出原始文本。
         """
-        txt = txt.replace("\r\n", "\n").replace("\r", "\n")
-
-        # "- ### 标题" → "\n### 标题"
-        txt = re.sub(
-            r"\n\s*-\s*(#+)\s*(.*?)\s*$",
-            lambda m: f"\n{m.group(1)} {m.group(2).strip()}",
-            txt,
-            flags=re.MULTILINE,
-        )
-
-        # 连续 ≥3 空行 → 2 空行
-        txt = re.sub(r"\n{3,}", "\n\n", txt)
-
-        return txt.rstrip()
+        return txt
