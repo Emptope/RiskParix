@@ -175,7 +175,7 @@ export default function Home() {
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <h1 className={`text-xl font-bold ${colors.textPrimary}`}>
-              股票筛选
+              股票面板
             </h1>
           </div>
           <button
