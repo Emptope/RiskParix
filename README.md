@@ -24,11 +24,12 @@
       - **users.py** 用户账本数据 (user_summary.parquet)
     - **app.py** 路由注册
   - **frontend/** 前端 React + Vite
-    - **src/** 
+    - **src/**
       - **api/**
         - **api.js** 接口函数定义
       - **components/**
         - **NavBar.jsx** 导航栏
+        - **AIChatAssistant.jsx** AI 聊天助手
       - **context/**
         - **ThemeContext.jsx** 浅色深色模式切换
       - **pages/**
@@ -64,6 +65,7 @@
 2. `cd web/frontend` 切换到 frontend 目录，运行 `npm install` 安装 Nodejs 所需的包
 3. `cd ../backend` 切换到 backend 目录，运行 `pip install -r requirements.txt` 安装 Python 所需的包
 4. `cd ..` ，然后
+
 - Windows
   - 桌面端：`cd desktop` ，在 desktop 目录下运行 `pip install -r requirements.txt` 然后运行 desktop/home.py
   - 网页端：Powershell 中输入`cd web`切换到 web 目录，然后输入 `.\start.bat` 运行，关闭新打开的终端停止运行
