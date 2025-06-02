@@ -6,8 +6,7 @@ import Papa from "papaparse";
 import groupBy from "lodash/groupBy";
 import dayjs from "dayjs";
 import { useTheme } from "../context/ThemeContext";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import AIChatAssistant from "../components/AIChatAssistant";
 
 export default function Detail() {
   const { code } = useParams();
@@ -55,8 +54,6 @@ export default function Detail() {
       ? "shadow-xl shadow-black/40"
       : "shadow-lg shadow-gray-300/20",
   };
-  const textareaRef = useRef(null);
-
   // 拖拽相关状态
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
@@ -67,14 +64,6 @@ export default function Detail() {
   const [stockInfo, setStockInfo] = useState(null);
   const [klineData, setKlineData] = useState([]);
   const [period, setPeriod] = useState("日K");
-
-  // Chat assistant state
-  const [messages, setMessages] = useState([
-    { role: "ai", content: `当前分析标的：${code}，请问有什么可以帮您？` },
-  ]);
-  const [inputValue, setInputValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
 
   // 拖拽处理函数
   const handleMouseDown = useCallback((divider) => {
@@ -149,10 +138,6 @@ export default function Detail() {
         console.error("获取股票信息失败:", err);
       });
   }, [code]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   const fetchKlineFromCSV = async (stockCode) => {
     try {
@@ -375,89 +360,7 @@ export default function Detail() {
     };
   };
 
-  // Chat assistant functions
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
 
-    const userMessage = { role: "user", content: inputValue };
-    const currentHistory = [...messages, userMessage];
-
-    setMessages(currentHistory);
-    setInputValue("");
-    setIsLoading(true);
-
-    try {
-      const trimmedHistory = currentHistory
-        .filter((msg) => msg.role === "user" || msg.role === "ai")
-        .slice(-6)
-        .map((msg) => ({
-          role: msg.role === "user" ? "user" : "assistant",
-          content: msg.content,
-        }));
-
-      const res = await fetch("http://localhost:8000/api/chat/stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: inputValue,
-          history: trimmedHistory,
-          stock_id: code,
-        }),
-      });
-
-      if (!res.ok || !res.body) throw new Error("连接失败");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let partial = "";
-      let aiText = "";
-
-      let aiIndex = currentHistory.length;
-      setMessages((prev) => [...prev, { role: "ai", content: "" }]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        partial += decoder.decode(value, { stream: true });
-        const lines = partial.split("\n\n");
-
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i];
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") {
-              setIsLoading(false);
-              return;
-            }
-            aiText += data;
-
-            setMessages((prev) => {
-              const updated = [...prev];
-              updated[aiIndex].content = aiText;
-              return updated;
-            });
-          }
-        }
-
-        partial = lines[lines.length - 1];
-      }
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", content: "发生错误: " + err.message },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
 
   const middleWidth = 100 - leftWidth - rightWidth;
 
@@ -902,165 +805,17 @@ export default function Detail() {
           onMouseDown={() => handleMouseDown("right")}
         ></div>
 
-        {/* 右侧聊天助手 - 优化对比度和可读性 */}
-        <div
-          className={`${colors.tertiary} flex flex-col transition-all duration-200`}
-          style={{ width: `${rightWidth}%` }}
-        >
-          <div
-            className={`${colors.borderStrong} border-b p-6 ${colors.secondary}`}
-          >
-            <div className="flex items-center space-x-3">
-              <div
-                className={`w-10 h-10 ${colors.accent} rounded-lg flex items-center justify-center ${colors.shadow}`}
-              >
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h2 className={`text-lg font-bold ${colors.textPrimary}`}>
-                  AI 分析助手
-                </h2>
-                <p className={`${colors.textMuted} text-xs`}>DeepSeek 驱动</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 消息展示区域 - 增强对比度 */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-4">
-              {messages.map((msg, index) =>
-                msg.role === "user" ? (
-                  <div key={index} className="flex justify-end">
-                    <div
-                      className={`${colors.accent} text-white px-4 py-3 rounded-lg rounded-br-sm max-w-[85%] ${colors.shadow}`}
-                    >
-                      <div className="text-sm leading-relaxed">
-                        {msg.content}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={index} className="flex justify-start">
-                    <div
-                      className={`${colors.secondary} ${colors.border} border px-4 py-3 rounded-lg rounded-bl-sm max-w-[85%] ${colors.shadow}`}
-                    >
-                      <div
-                        className={`prose prose-sm max-w-none ${
-                          isDark ? "prose-invert" : ""
-                        } ${colors.textPrimary} prose-headings:${
-                          colors.textPrimary
-                        } prose-p:${colors.textPrimary} prose-strong:${
-                          colors.textPrimary
-                        } prose-code:${colors.textPrimary}`}
-                      >
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.content || "分析中"}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-                )
-              )}
-
-              {/* 加载状态 - 优化动画 */}
-              {isLoading && (!messages[messages.length-1] || messages[messages.length-1]?.role !== 'ai' || messages[messages.length-1]?.content === '') && (
-                <div className="flex justify-start">
-                  <div
-                    className={`${colors.secondary} ${colors.border} border px-4 py-3 rounded-lg rounded-bl-sm ${colors.shadow}`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-          <div className={`${colors.borderStrong} border-t p-4 ${colors.secondary}`}>
-            <div className="flex items-end space-x-3">
-              <div className="flex-1">
-                <textarea
-                  ref={textareaRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onInput={(e) => {
-                    e.target.style.height = "auto";
-                    e.target.style.height = `${e.target.scrollHeight}px`;
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="输入您的问题..."
-                  className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} placeholder:${colors.textMuted} px-4 py-3 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all max-h-32`}
-                  rows={1}
-                  disabled={isLoading}
-                />
-              </div>
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading || !inputValue.trim()}
-                className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  isLoading || !inputValue.trim()
-                    ? `${colors.quaternary} ${colors.textDisabled} cursor-not-allowed`
-                    : `${colors.accent} ${colors.accentHover} text-white ${colors.shadow} hover:scale-105 active:scale-95`
-                }`}
-              >
-                {isLoading ? (
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
+        {/* 右侧聊天助手 */}
+        <div style={{ width: `${rightWidth}%` }} className="h-full">
+          <AIChatAssistant
+            apiEndpoint="http://localhost:8000/api/chat/stock"
+            contextId={code}
+            initialMessage={`当前分析标的：${code}，请问有什么可以帮您？`}
+            placeholder="输入您的问题..."
+            title="AI 分析助手"
+            subtitle="DeepSeek 驱动"
+            className="h-full"
+          />
         </div>
       </div>
     </div>

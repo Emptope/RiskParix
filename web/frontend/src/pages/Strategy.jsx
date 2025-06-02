@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { fetchUsers, fetchOrderBook } from '../api/api';
+import AIChatAssistant from '../components/AIChatAssistant';
 
 export default function Strategy() {
   const [users, setUsers] = useState([]);
@@ -23,13 +22,6 @@ export default function Strategy() {
   const [rightWidth, setRightWidth] = useState(30);
   const [isDragging, setIsDragging] = useState(null);
   
-  // 聊天助手状态
-  const [messages, setMessages] = useState([]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
-
   // 颜色定义
   const colors = {
     // 背景色
@@ -139,23 +131,6 @@ export default function Strategy() {
       .catch(err => console.error('获取订单数据失败:', err));
   }, []);
 
-  useEffect(() => {
-    if (selectedUser) {
-      setMessages([
-        { 
-          role: 'ai', 
-          content: `当前用户：${selectedUser}，请问您想分析什么？\n\n您可以尝试询问：\n- 这个用户使用的交易策略是什么？\n- 分析该用户的交易表现\n- 该用户的风险管理方式如何？\n- 有哪些策略优化建议？` 
-        }
-      ]);
-    } else {
-      setMessages([]);
-    }
-  }, [selectedUser]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   const handleFilter = () => {
     const result = users.filter(
       user => user.returnRate >= profitFilter && user.winRate >= winRateFilter
@@ -164,100 +139,11 @@ export default function Strategy() {
     setSelectedUser(null);
   };
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
-    const userMessage = { role: 'user', content: inputValue };
-    const currentHistory = [...messages, userMessage];
-    setMessages(currentHistory);
-    const currentInputValue = inputValue; 
-    setInputValue('');
-    setIsLoading(true);
-  
-    try {
-      const trimmedHistory = currentHistory
-        .filter(msg => msg.role === 'user' || msg.role === 'ai')
-        .slice(-6) 
-        .map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'assistant',
-          content: msg.content,
-        }));
-  
-      const res = await fetch('http://localhost:8000/api/chat/strategy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: currentInputValue, 
-          history: trimmedHistory.slice(0, -1), 
-          stock_id: selectedUser,
-        }),
-      });
-  
-      if (!res.ok || !res.body) throw new Error('连接失败');
-  
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let partial = '';
-      let aiText = '';
-      
-      setMessages(prev => [...prev, { role: 'ai', content: '' }]);
-      const aiMessageIndex = currentHistory.length;
-  
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-  
-        partial += decoder.decode(value, { stream: true });
-        const lines = partial.split('\n\n');
-  
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i];
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return; 
-            }
-            aiText += data;
-            setMessages(prev => {
-              const updated = [...prev];
-              if (updated[aiMessageIndex] && updated[aiMessageIndex].role === 'ai') {
-                updated[aiMessageIndex].content = aiText;
-              }
-              return updated;
-            });
-          }
-        }
-        partial = lines[lines.length - 1];
-      }
-    } catch (err) {
-       setMessages(prev => {
-        const updated = [...prev];
-        const lastMessage = updated[updated.length -1];
-        if(lastMessage && lastMessage.role === 'ai' && lastMessage.content === '') {
-            lastMessage.content = '发生错误: ' + err.message;
-        } else {
-            updated.push({ role: 'ai', content: '发生错误: ' + err.message });
-        }
-        return updated;
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
   const userOrders = orderBook.filter(order => order.user === selectedUser);
   const middleWidth = Math.max(10, 100 - leftWidth - rightWidth);
 
   return (
-    <div
-      className={`flex flex-col h-screen ${colors.primary} ${colors.textPrimary} transition-colors duration-300`}
-    >
+      <div className={`flex flex-col h-screen ${colors.primary} ${colors.textPrimary} transition-colors duration-300`}>
       {/* 顶部导航栏 */}
       <div
         className={`${colors.secondary} ${colors.borderStrong} border-b px-6 py-4 ${colors.shadow}`}
@@ -525,164 +411,19 @@ export default function Strategy() {
           }`}
           onMouseDown={() => handleMouseDown("right")}
         ></div>
-
         {/* 右侧聊天助手 */}
-        <div
-          className={`${colors.tertiary} flex flex-col transition-all duration-200`}
-          style={{ width: `${rightWidth}%` }}
-        >
-          <div
-            className={`${colors.borderStrong} border-b p-6 ${colors.secondary}`}
-          >
-            <div className="flex items-center space-x-3">
-              <div
-                className={`w-10 h-10 ${colors.accent} rounded-lg flex items-center justify-center ${colors.shadow}`}
-              >
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h2 className={`text-lg font-bold ${colors.textPrimary}`}>
-                  AI 分析助手
-                </h2>
-                <p className={`${colors.textMuted} text-xs`}>DeepSeek 驱动</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 消息展示区域 */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-4">
-              {messages.map((msg, index) =>
-                msg.role === "user" ? (
-                  <div key={index} className="flex justify-end">
-                    <div
-                      className={`${colors.accent} text-white px-4 py-3 rounded-lg rounded-br-sm max-w-[85%] ${colors.shadow}`}
-                    >
-                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {msg.content}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={index} className="flex justify-start">
-                    <div
-                      className={`${colors.secondary} ${colors.border} border px-4 py-3 rounded-lg rounded-bl-sm max-w-[85%] ${colors.shadow}`}
-                    >
-                      <div
-                        className={`prose prose-sm max-w-none ${
-                          isDark ? "prose-invert" : ""
-                        } ${colors.textPrimary} 
-                                    prose-headings:${colors.textPrimary} prose-p:${colors.textSecondary} prose-strong:${colors.textPrimary} 
-                                    prose-code:${colors.accentText} prose-code:bg-black/10 prose-code:p-1 prose-code:rounded-md
-                                    prose-a:${colors.accentText} hover:prose-a:underline 
-                                    prose-ul:${colors.textSecondary} prose-ol:${colors.textSecondary} 
-                                    prose-li:${colors.textSecondary} prose-li::marker:${colors.textMuted}
-                                    dark:prose-code:bg-white/10`}
-                      >
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.content || "分析中"}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-                )
-              )}
-
-              {isLoading && (!messages[messages.length-1] || messages[messages.length-1]?.role !== 'ai' || messages[messages.length-1]?.content === '') && ( 
-                <div className="flex justify-start">
-                  <div
-                    className={`${colors.secondary} ${colors.border} border px-4 py-3 rounded-lg rounded-bl-sm ${colors.shadow}`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-          
-          <div className={`${colors.borderStrong} border-t p-4 ${colors.secondary}`}>
-            <div className="flex items-end space-x-3">
-              <div className="flex-1">
-                <textarea
-                  ref={textareaRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onInput={(e) => {
-                    e.target.style.height = "auto";
-                    e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`; 
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder={selectedUser ? "向AI助手提问..." : "请先选择用户再提问"}
-                  className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} placeholder:${colors.textMuted} px-4 py-3 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all max-h-32`}
-                  rows={1}
-                  disabled={isLoading || !selectedUser}
-                />
-              </div>
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading || !inputValue.trim() || !selectedUser}
-                className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                  isLoading || !inputValue.trim() || !selectedUser
-                    ? `${colors.quaternary} ${colors.textDisabled} cursor-not-allowed`
-                    : `${colors.accent} ${colors.accentHover} text-white ${colors.shadow} hover:scale-105 active:scale-95`
-                }`}
-                title="发送消息"
-              >
-                {isLoading ? (
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 16.571V11a1 1 0 112 0v5.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
+        <div style={{ width: `${rightWidth}%` }} className="h-full">
+          <AIChatAssistant
+            apiEndpoint="http://localhost:8000/api/chat/strategy"
+            contextId={selectedUser}
+            initialMessage={selectedUser ? `当前用户：${selectedUser}，请问您想分析什么？\n\n您可以尝试询问：\n- 这个用户使用的交易策略是什么？\n- 分析该用户的交易表现\n- 该用户的风险管理方式如何？\n- 有哪些策略优化建议？` : null}
+            placeholder="向AI助手提问..."
+            disabled={!selectedUser}
+            disabledPlaceholder="请先选择用户再提问"
+            title="AI 分析助手"
+            subtitle="DeepSeek 驱动"
+            className="h-full"
+          />
         </div>
       </div>
     </div>
