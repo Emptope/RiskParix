@@ -347,7 +347,7 @@ export default function Detail() {
           smooth: false,
           lineStyle: {
             width: 2,
-            color: isDark ? "#8b5cf6" : "#7c3aed",
+            color: isDark ? "#60a5fa" : "#1d4ed8",
           },
           symbol: "none",
           emphasis: {
@@ -359,8 +359,6 @@ export default function Detail() {
       ],
     };
   };
-
-
 
   const middleWidth = 100 - leftWidth - rightWidth;
 
