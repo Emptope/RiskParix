@@ -80,16 +80,20 @@ export async function fetchStocks(filters = {}) {
 /**
  * 获取单个股票的基本信息
  * @param {string} code - 股票代码
+ * @param {string|number} year - 年份
  * @returns {Promise<StockItem|null>} 股票信息
  */
-export async function fetchStockInfo(code) {
+export async function fetchStockInfo(code, year) {
   try {
     const allItems = await apiRequest(`${API_BASE_URL}/stocks`);
     
-    const stockInfo = allItems.find(item => item["证券代码"] === code);
+    const stockInfo = allItems.find(item => 
+      item["证券代码"] === code && 
+      Number(item["年份"]) === Number(year)
+    );
     
     if (!stockInfo) {
-      console.warn(`Stock with code ${code} not found`);
+      console.warn(`Stock with code ${code} and year ${year} not found`);
       return null;
     }
 

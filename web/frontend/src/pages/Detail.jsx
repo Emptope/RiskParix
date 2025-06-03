@@ -2,43 +2,42 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchStockDetail, fetchStockInfo } from "../api/api";
 import ReactECharts from "echarts-for-react";
-import Papa from "papaparse";
 import groupBy from "lodash/groupBy";
 import dayjs from "dayjs";
 import { useTheme } from "../context/ThemeContext";
 import AIChatAssistant from "../components/AIChatAssistant";
 
 export default function Detail() {
-  const { code } = useParams();
+  const { code, year } = useParams();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
 
   const colors = {
-    // 背景色 - 使用更深的背景提高对比度
+    // 背景色
     primary: isDark ? "bg-gray-950" : "bg-gray-50",
     secondary: isDark ? "bg-gray-900" : "bg-white",
     tertiary: isDark ? "bg-gray-800" : "bg-gray-100",
     quaternary: isDark ? "bg-gray-700" : "bg-gray-50",
 
-    // 文字色 - 提高可读性
+    // 文字色 
     textPrimary: isDark ? "text-gray-100" : "text-gray-900",
     textSecondary: isDark ? "text-gray-300" : "text-gray-600",
     textMuted: isDark ? "text-gray-400" : "text-gray-500",
     textDisabled: isDark ? "text-gray-600" : "text-gray-400",
 
-    // 边框色 - 清晰分界
+    // 边框色
     border: isDark ? "border-gray-700" : "border-gray-200",
     borderLight: isDark ? "border-gray-800" : "border-gray-100",
     borderStrong: isDark ? "border-gray-600" : "border-gray-300",
 
-    // 强调色 - 保持品牌一致性但提高对比度
+    // 强调色 
     accent: isDark ? "bg-blue-600" : "bg-blue-600",
     accentHover: isDark ? "hover:bg-blue-500" : "hover:bg-blue-700",
     accentLight: isDark ? "bg-blue-900/30" : "bg-blue-50",
     accentText: isDark ? "text-blue-400" : "text-blue-600",
 
-    // 状态色 - 增强对比
+    // 状态色
     success: isDark ? "text-emerald-400" : "text-emerald-600",
     successBg: isDark ? "bg-emerald-900/30" : "bg-emerald-50",
     danger: isDark ? "text-red-400" : "text-red-600",
@@ -46,7 +45,7 @@ export default function Detail() {
     warning: isDark ? "text-amber-400" : "text-amber-600",
     warningBg: isDark ? "bg-amber-900/30" : "bg-amber-50",
 
-    // 阴影 - 适合深色模式
+    // 阴影
     shadow: isDark
       ? "shadow-lg shadow-black/25"
       : "shadow-sm shadow-gray-200/50",
@@ -130,41 +129,14 @@ export default function Detail() {
         fetchKlineFromCSV(code);
       });
 
-    fetchStockInfo(code)
+    fetchStockInfo(code, year)
       .then((info) => {
         setStockInfo(info);
       })
       .catch((err) => {
         console.error("获取股票信息失败:", err);
       });
-  }, [code]);
-
-  const fetchKlineFromCSV = async (stockCode) => {
-    try {
-      const response = await fetch("/data/day_klines/all_klines.csv");
-      const text = await response.text();
-      Papa.parse(text, {
-        header: true,
-        complete: (result) => {
-          const filtered = result.data.filter((row) =>
-            row["证券代码"]?.includes(stockCode)
-          );
-          const formatted = filtered
-            .map((row) => ({
-              date: row["交易日期"],
-              open: parseFloat(row["开盘价"]),
-              close: parseFloat(row["收盘价"]),
-              low: parseFloat(row["最低价"]),
-              high: parseFloat(row["最高价"]),
-            }))
-            .filter((row) => !isNaN(row.open));
-          setKlineData(formatted);
-        },
-      });
-    } catch (err) {
-      console.error("读取文件失败:", err);
-    }
-  };
+  }, [code, year]);
 
   const periods = ["日K", "周K", "月K", "季K", "年K"];
 
@@ -366,7 +338,7 @@ export default function Detail() {
     <div
       className={`flex flex-col h-screen ${colors.primary} ${colors.textPrimary} transition-colors duration-300`}
     >
-      {/* 顶部导航栏 - 增强对比度 */}
+      {/* 顶部导航栏 */}
       <div
         className={`${colors.secondary} ${colors.borderStrong} border-b px-6 py-4 ${colors.shadow}`}
       >
@@ -406,13 +378,13 @@ export default function Detail() {
       </div>
 
       <div ref={containerRef} className="flex flex-1 overflow-hidden">
-        {/* 左侧股票信息面板 - 优化布局和对比度 */}
+        {/* 左侧股票信息面板 */}
         <div
           className={`${colors.tertiary} overflow-y-auto transition-all duration-200`}
           style={{ width: `${leftWidth}%` }}
         >
           <div className="p-6 space-y-6">
-            {/* 标题区域 - 简化设计 */}
+            {/* 标题区域 */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <div
@@ -437,7 +409,7 @@ export default function Detail() {
 
             {stockInfo ? (
               <div className="space-y-6">
-                {/* 基本信息卡片 - 扁平化设计 */}
+                {/* 基本信息卡片 */}
                 <div
                   className={`${colors.secondary} ${colors.border} border rounded-lg p-6 ${colors.shadow} transition-all duration-200`}
                 >
@@ -484,7 +456,7 @@ export default function Detail() {
                   </div>
                 </div>
 
-                {/* 财务指标卡片 - 增强可读性 */}
+                {/* 财务指标卡片 */}
                 <div
                   className={`${colors.secondary} ${colors.border} border rounded-lg p-6 ${colors.shadow} transition-all duration-200`}
                 >
@@ -512,7 +484,7 @@ export default function Detail() {
                           }`}
                         >
                           {stockInfo.annual_return
-                            ? `${(stockInfo.annual_return * 100).toFixed(2)}%`
+                            ? `${stockInfo.annual_return.toFixed(2)}%`
                             : "--"}
                         </div>
                       </div>
@@ -527,7 +499,7 @@ export default function Detail() {
                           }`}
                           style={{
                             width: `${Math.min(
-                              Math.abs(stockInfo.annual_return * 100),
+                              Math.abs(stockInfo.annual_return),
                               100
                             )}%`,
                           }}
@@ -547,7 +519,7 @@ export default function Detail() {
                           className={`px-3 py-1 rounded-md text-xs font-bold ${colors.warningBg} ${colors.warning}`}
                         >
                           {stockInfo.max_drawdown
-                            ? `${(stockInfo.max_drawdown * 100).toFixed(2)}%`
+                            ? `${stockInfo.max_drawdown.toFixed(2)}%`
                             : "--"}
                         </div>
                       </div>
@@ -558,7 +530,7 @@ export default function Detail() {
                           className="h-full bg-amber-500 transition-all duration-500 rounded-full"
                           style={{
                             width: `${Math.min(
-                              Math.abs(stockInfo.max_drawdown * 100),
+                              Math.abs(stockInfo.max_drawdown),
                               100
                             )}%`,
                           }}
@@ -728,7 +700,7 @@ export default function Detail() {
           </div>
         </div>
 
-        {/* 左侧拖拽分隔条 - 简化设计 */}
+        {/* 左侧拖拽分隔条 */}
         <div
           className={`w-1 cursor-col-resize transition-all duration-200 ${
             isDragging === "left"
@@ -740,7 +712,7 @@ export default function Detail() {
           onMouseDown={() => handleMouseDown("left")}
         ></div>
 
-        {/* 中间图表区域 - 优化布局 */}
+        {/* 中间图表区域 */}
         <div
           className={`${colors.secondary} flex flex-col transition-all duration-200`}
           style={{ width: `${middleWidth}%` }}

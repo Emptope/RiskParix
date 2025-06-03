@@ -381,7 +381,7 @@ export default function Home() {
                       <tr
                         key={stk.code + stk.year}
                         className={`cursor-pointer transition-colors duration-150 hover:${isDark ? 'bg-gray-700/50' : 'bg-gray-100/50'}`}
-                        onClick={() => navigate(`/detail/${stk.code}`)}
+                        onClick={() => navigate(`/detail/${stk.code}/${stk.year}`)}
                       >
                         <td className={`px-4 py-3 text-center text-sm ${colors.textPrimary}`}>
                           {stk.code}
