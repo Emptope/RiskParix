@@ -1,9 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function NavBar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   const linkClass = (path) =>
     `block px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
@@ -13,12 +16,16 @@ export default function NavBar() {
     }`;
 
   return (
-    <header className="bg-blue-900 shadow-md sticky top-0 z-50">
+    <header className={`shadow-md sticky top-0 z-50 transition-colors duration-300 ${
+      isDark ? 'bg-gray-900' : 'bg-blue-900'
+    }`}>
       <div className="max-w-screen-xl mx-auto flex items-center justify-between h-16 px-4">
         {/* Logo */}
         <div className="flex flex-col">
           <span className="text-xl font-bold text-white tracking-wide">RiskParix</span>
-          <span className="text-xs text-blue-200 leading-tight">Trade with the risk.</span>
+          <span className={`text-xs leading-tight ${
+            isDark ? 'text-gray-300' : 'text-blue-200'
+          }`}>Trade with the risk.</span>
         </div>
 
         {/* Hamburger button for mobile */}
@@ -50,11 +57,28 @@ export default function NavBar() {
           </svg>
         </button>
 
-        {/* Navigation links */}
-        <nav className={`sm:flex sm:items-center sm:space-x-2 ${menuOpen ? 'block' : 'hidden'} sm:block`}>
-          <Link to="/" className={linkClass('/')}>主页</Link>
-          <Link to="/strategy" className={linkClass('/strategy')}>策略分析</Link>
-        </nav>
+        {/* Navigation links and theme toggle */}
+        <div className={`sm:flex sm:items-center sm:space-x-2 ${
+          menuOpen ? 'block' : 'hidden'
+        } sm:block`}>
+          <nav className="flex items-center space-x-2">
+            <Link to="/" className={linkClass('/')}>主页</Link>
+            <Link to="/strategy" className={linkClass('/strategy')}>策略分析</Link>
+            
+            {/* Theme toggle button */}
+            <button
+              onClick={toggleTheme}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                isDark 
+                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 hover:text-white'
+                  : 'bg-blue-700 text-blue-100 hover:bg-blue-600 hover:text-white'
+              }`}
+              title={isDark ? '切换到浅色模式' : '切换到深色模式'}
+            >
+              {isDark ? '🌞' : '🌙'}
+            </button>
+          </nav>
+        </div>
       </div>
     </header>
   );

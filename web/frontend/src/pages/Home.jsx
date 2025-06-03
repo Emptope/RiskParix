@@ -183,12 +183,6 @@ export default function Home() {
               股票面板
             </h1>
           </div>
-          <button
-            onClick={toggleTheme}
-            className={`${colors.accent} ${colors.accentHover} text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 ${colors.shadow}`}
-          >
-            {isDark ? "🌞 浅色" : "🌙 深色"}
-          </button>
         </div>
       </div>
 
