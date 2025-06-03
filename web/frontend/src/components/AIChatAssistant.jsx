@@ -61,10 +61,10 @@ export default function AIChatAssistant({
     // 阴影
     shadow: isDark
       ? "shadow-lg shadow-black/25"
-      : "shadow-sm shadow-gray-200/50",
+      : "shadow-lg shadow-gray-400/25",
     shadowStrong: isDark
       ? "shadow-xl shadow-black/40"
-      : "shadow-lg shadow-gray-300/20",
+      : "shadow-xl shadow-gray-500/30",
   };
 
   // 当contextId或initialMessage变化时重置消息
