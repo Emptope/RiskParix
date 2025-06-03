@@ -15,7 +15,7 @@ export default function Home() {
     pe_ratio: 100,
     pb_ratio: 10,
     sharpe_ratio: 0,
-    stock_code: "", 
+    search_text: "",
   });
   const [tmpFilters, setTmpFilters] = useState(filters);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
@@ -101,8 +101,13 @@ export default function Home() {
   const filteredStocks = useMemo(() => {
     setDisplayCount(50);
     return allStocks.filter((item) => {
-      if (filters.stock_code && !item.code.toLowerCase().includes(filters.stock_code.toLowerCase())) {
-        return false;
+      if (filters.search_text) {
+        const searchTerm = filters.search_text.toLowerCase();
+        const codeMatch = item.code.toLowerCase().includes(searchTerm);
+        const nameMatch = item.name.toLowerCase().includes(searchTerm);
+        if (!codeMatch && !nameMatch) {
+          return false;
+        }
       }
       if (filters.year && String(item.year) !== String(filters.year))
         return false;
@@ -264,12 +269,12 @@ export default function Home() {
             >
               <div className="space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${colors.textSecondary}`}>股票代码</label>
+                  <label className={`block text-sm font-medium mb-1 ${colors.textSecondary}`}>股票搜索</label>
                   <input
                     type="text"
-                    value={tmpFilters.stock_code}
-                    onChange={(e) => onFilterChange("stock_code", e.target.value)}
-                    placeholder="输入股票代码搜索"
+                    value={tmpFilters.search_text}
+                    onChange={(e) => onFilterChange("search_text", e.target.value)}
+                    placeholder="输入代码或名称搜索"
                     className={`w-full border ${colors.border} px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
                   />
                 </div>
