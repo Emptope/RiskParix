@@ -20,7 +20,6 @@ export default function Home() {
   const [tmpFilters, setTmpFilters] = useState(filters);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
 
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const isDark = theme === "dark";
 
