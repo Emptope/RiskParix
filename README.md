@@ -32,6 +32,7 @@
         - **AIChatAssistant.jsx** AI 聊天助手
         - **KLineChart.jsx** K 线图
         - **StockInfo.jsx** 个股卡片
+        - **StockList.jsx** 个股列表
       - **context/**
         - **ThemeContext.jsx** 浅色深色模式切换
       - **pages/**
