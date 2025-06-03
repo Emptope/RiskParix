@@ -30,6 +30,7 @@
       - **components/**
         - **NavBar.jsx** 导航栏
         - **AIChatAssistant.jsx** AI 聊天助手
+        - **KLineChart.jsx** K 线图
       - **context/**
         - **ThemeContext.jsx** 浅色深色模式切换
       - **pages/**

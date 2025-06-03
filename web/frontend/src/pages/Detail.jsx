@@ -21,7 +21,7 @@ export default function Detail() {
     tertiary: isDark ? "bg-gray-800" : "bg-gray-100",
     quaternary: isDark ? "bg-gray-700" : "bg-gray-50",
 
-    // 文字色 
+    // 文字色
     textPrimary: isDark ? "text-gray-100" : "text-gray-900",
     textSecondary: isDark ? "text-gray-300" : "text-gray-600",
     textMuted: isDark ? "text-gray-400" : "text-gray-500",
@@ -32,7 +32,7 @@ export default function Detail() {
     borderLight: isDark ? "border-gray-800" : "border-gray-100",
     borderStrong: isDark ? "border-gray-600" : "border-gray-300",
 
-    // 强调色 
+    // 强调色
     accent: isDark ? "bg-blue-600" : "bg-blue-600",
     accentHover: isDark ? "hover:bg-blue-500" : "hover:bg-blue-700",
     accentLight: isDark ? "bg-blue-900/30" : "bg-blue-50",
@@ -707,9 +707,9 @@ export default function Detail() {
           className={`w-1 cursor-col-resize transition-all duration-200 ${
             isDragging === "left"
               ? "bg-blue-500"
-              : isDark 
-                ? "bg-gray-700 hover:bg-blue-500" 
-                : "bg-gray-300 hover:bg-blue-500"
+              : isDark
+              ? "bg-gray-700 hover:bg-blue-500"
+              : "bg-gray-300 hover:bg-blue-500"
           }`}
           onMouseDown={() => handleMouseDown("left")}
         ></div>
@@ -733,9 +733,9 @@ export default function Detail() {
           className={`w-1 cursor-col-resize transition-all duration-200 ${
             isDragging === "right"
               ? "bg-blue-500"
-              : isDark 
-                ? "bg-gray-700 hover:bg-blue-500" 
-                : "bg-gray-300 hover:bg-blue-500"
+              : isDark
+              ? "bg-gray-700 hover:bg-blue-500"
+              : "bg-gray-300 hover:bg-blue-500"
           }`}
           onMouseDown={() => handleMouseDown("right")}
         ></div>
