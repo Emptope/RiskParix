@@ -6,6 +6,7 @@ import groupBy from "lodash/groupBy";
 import dayjs from "dayjs";
 import { useTheme } from "../context/ThemeContext";
 import AIChatAssistant from "../components/AIChatAssistant";
+import KLineChart from "../components/KLineChart";
 
 export default function Detail() {
   const { code, year } = useParams();
@@ -53,6 +54,7 @@ export default function Detail() {
       ? "shadow-xl shadow-black/40"
       : "shadow-xl shadow-gray-500/30",
   };
+
   // 拖拽相关状态
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
@@ -714,53 +716,16 @@ export default function Detail() {
 
         {/* 中间图表区域 */}
         <div
-          className={`${colors.secondary} flex flex-col transition-all duration-200`}
+          className="transition-all duration-200"
           style={{ width: `${middleWidth}%` }}
         >
-          <div
-            className={`${colors.borderStrong} border-b p-6 ${colors.secondary}`}
-          >
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <h2 className={`text-xl font-bold ${colors.textPrimary}`}>
-                  K线图表
-                </h2>
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`${colors.textSecondary} text-sm font-medium`}
-                  >
-                    周期:
-                  </span>
-                  <select
-                    value={period}
-                    onChange={(e) => setPeriod(e.target.value)}
-                    className={`${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all`}
-                  >
-                    {periods.map((p) => (
-                      <option
-                        key={p}
-                        value={p}
-                        className={`${colors.quaternary} ${colors.textPrimary}`}
-                      >
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-            </div>
-          </div>
-          <div className="flex-1 p-6">
-            <div
-              className={`h-full ${colors.border} border rounded-lg overflow-hidden ${colors.shadow}`}
-            >
-              <ReactECharts
-                option={getKlineOption()}
-                style={{ height: "100%", width: "100%" }}
-              />
-            </div>
-          </div>
+          <KLineChart
+            data={klineData}
+            period={period}
+            onPeriodChange={setPeriod}
+            showPeriodSelector={true}
+            className="h-full"
+          />
         </div>
 
         {/* 右侧拖拽分隔条 */}
