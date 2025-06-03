@@ -17,6 +17,10 @@ def normalize_code(code: str) -> str:
         return f"sh.{code[:-2]}"
     elif code.endswith("SZ"):
         return f"sz.{code[:-2]}"
+    elif code.startswith("BJ"):
+        return f"bj.{code[2:]}"
+    elif code.startswith("HK"):
+        return f"hk.{code[2:]}"
     else:
         return f"{'sh' if code.startswith('6') else 'sz'}.{code}"
 
