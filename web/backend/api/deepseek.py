@@ -19,7 +19,7 @@ class DeepSeekClient:
         *,
         model: str = "deepseek-chat",
         max_tokens: int = 2000,
-        temperature: float = 0.7,
+        temperature: float = 0.6,
         role_description: str | None = None,
         base_url: str = "https://api.deepseek.com/v1",
     ) -> None:
@@ -30,7 +30,6 @@ class DeepSeekClient:
         self.temperature = temperature
         self.base_url = base_url.rstrip("/")
 
-        # 可自定义系统角色描述；否则给一个通用的
         self.role_description = role_description or (
             "你是一名专业的量化研究员，擅长金融市场分析、技术分析与交易策略评估。"
             "回答应精准、有条理，避免重复。"
