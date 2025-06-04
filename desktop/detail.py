@@ -1,12 +1,11 @@
 import os
 import pandas as pd
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk, messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import mplfinance as mpf
-from matplotlib import rcParams
-from chat import ChatBox, DeepSeekClient
+from chat import ChatBox
 
 # 全局设置中文字体
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体显示中文

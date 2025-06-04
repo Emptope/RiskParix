@@ -5,6 +5,9 @@ import threading
 import requests
 import tkinter as tk
 from tkinter import ttk
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ========== DeepSeek 客户端 ==========
 class DeepSeekClient:
@@ -79,7 +82,7 @@ class DeepSeekClient:
 class ChatBox(tk.Frame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-        self.client = DeepSeekClient(api_key="sk-9db9e88186f14721b11b70c8c791b1d7", stock_id="sh.600028")
+        self.client = DeepSeekClient(api_key=os.getenv("DEEPSEEK_API_KEY"), stock_id="sh.600028")
         self.configure(bg='#eaeaea')
         self.pack(fill=tk.BOTH, expand=True)
         self.create_widgets()

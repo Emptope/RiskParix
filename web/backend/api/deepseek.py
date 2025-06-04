@@ -1,11 +1,11 @@
 from __future__ import annotations
 import json
 import os
-import re
+import requests
+from dotenv import load_dotenv
 from typing import Dict, List, Optional, Iterable
 
-import requests
-
+load_dotenv()
 
 class DeepSeekClient:
     """
@@ -23,7 +23,7 @@ class DeepSeekClient:
         role_description: str | None = None,
         base_url: str = "https://api.deepseek.com/v1",
     ) -> None:
-        self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY", "sk-9db9e88186f14721b11b70c8c791b1d7")
+        self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
         self.stock_id = stock_id
         self.model = model
         self.max_tokens = max_tokens
