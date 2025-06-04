@@ -12,6 +12,13 @@ export default function FilterPanel({
   const years = Array.from({ length: 2025 - 2014 }, (_, i) => 2014 + i);
   const sliderColor = isDark ? "bg-gray-600" : "bg-gray-300";
 
+  // 处理回车键搜索
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      onApplyFilters();
+    }
+  };
+
   return (
     <div className={`w-[20%] ${colors.secondary} overflow-y-auto`}>
       <div className="p-6 space-y-6">
@@ -53,6 +60,7 @@ export default function FilterPanel({
                 type="text"
                 value={tmpFilters.search_text}
                 onChange={(e) => onFilterChange("search_text", e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="输入代码或名称搜索"
                 className={`w-full border ${colors.border} px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                   isDark ? "bg-gray-800 text-white" : "bg-white text-black"
