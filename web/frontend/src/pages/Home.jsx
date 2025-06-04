@@ -9,6 +9,9 @@ export default function Home() {
   const [allStocks, setAllStocks] = useState([]);
   const [displayStocks, setDisplayStocks] = useState([]);
   const [displayCount, setDisplayCount] = useState(50);
+  
+  // 分离搜索文本和其他筛选条件
+  const [searchText, setSearchText] = useState(""); // 实时搜索文本
   const [filters, setFilters] = useState({
     year: "",
     annual_return: 0,
@@ -16,9 +19,11 @@ export default function Home() {
     pe_ratio: 100,
     pb_ratio: 10,
     sharpe_ratio: 0,
+  });
+  const [tmpFilters, setTmpFilters] = useState({
+    ...filters,
     search_text: "",
   });
-  const [tmpFilters, setTmpFilters] = useState(filters);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
 
   const navigate = useNavigate();
@@ -76,13 +81,21 @@ export default function Home() {
   }, []);
 
   const onFilterChange = (key, value) => {
-    const newTmp = { ...tmpFilters, [key]: value };
-    setTmpFilters(newTmp);
+    if (key === "search_text") {
+      // 搜索文本实时更新
+      setSearchText(value);
+      setTmpFilters({ ...tmpFilters, [key]: value });
+    } else {
+      // 其他筛选条件只更新临时状态
+      setTmpFilters({ ...tmpFilters, [key]: value });
+    }
   };
 
   // 手动应用筛选函数
   const handleApplyFilters = () => {
-    setFilters(tmpFilters);
+    const { search_text, ...otherFilters } = tmpFilters;
+    setFilters(otherFilters);
+    // 搜索文本已经实时更新，不需要额外处理
   };
 
   // 重置筛选函数
@@ -94,10 +107,14 @@ export default function Home() {
       pe_ratio: 100,
       pb_ratio: 10,
       sharpe_ratio: 0,
+    };
+    const defaultTmpFilters = {
+      ...defaultFilters,
       search_text: "",
     };
-    setTmpFilters(defaultFilters);
+    setTmpFilters(defaultTmpFilters);
     setFilters(defaultFilters);
+    setSearchText("");
   };
 
   const formatNumber = (num) => {
@@ -113,27 +130,45 @@ export default function Home() {
     setSortConfig({ key, direction });
   };
 
+  // 检查是否应用了非默认的筛选条件
+  const hasActiveFilters = () => {
+    return (
+      filters.year !== "" ||
+      filters.annual_return !== 0 ||
+      filters.max_drawdown !== 100 ||
+      filters.pe_ratio !== 100 ||
+      filters.pb_ratio !== 10 ||
+      filters.sharpe_ratio !== 0
+    );
+  };
+
   const filteredStocks = useMemo(() => {
     setDisplayCount(50);
     return allStocks.filter((item) => {
-      if (filters.search_text) {
-        const searchTerm = filters.search_text.toLowerCase();
+      // 首先应用搜索文本筛选（实时）
+      if (searchText) {
+        const searchTerm = searchText.toLowerCase();
         const codeMatch = item.code.toLowerCase().includes(searchTerm);
         const nameMatch = item.name.toLowerCase().includes(searchTerm);
         if (!codeMatch && !nameMatch) {
           return false;
         }
       }
-      if (filters.year && String(item.year) !== String(filters.year))
-        return false;
-      if (Number(item.annual_return) < filters.annual_return) return false;
-      if (Number(item.max_drawdown) > filters.max_drawdown) return false;
-      if (Number(item.pe_ratio) > filters.pe_ratio) return false;
-      if (Number(item.pb_ratio) > filters.pb_ratio) return false;
-      if (Number(item.sharpe_ratio) < filters.sharpe_ratio) return false;
+
+      // 只有当有活跃筛选条件时才应用其他筛选
+      if (hasActiveFilters()) {
+        if (filters.year && String(item.year) !== String(filters.year))
+          return false;
+        if (Number(item.annual_return) < filters.annual_return) return false;
+        if (Number(item.max_drawdown) > filters.max_drawdown) return false;
+        if (Number(item.pe_ratio) > filters.pe_ratio) return false;
+        if (Number(item.pb_ratio) > filters.pb_ratio) return false;
+        if (Number(item.sharpe_ratio) < filters.sharpe_ratio) return false;
+      }
+      
       return true;
     });
-  }, [allStocks, filters]);
+  }, [allStocks, searchText, filters]);
 
   const sortedStocks = useMemo(() => {
     if (!sortConfig.key) return filteredStocks;

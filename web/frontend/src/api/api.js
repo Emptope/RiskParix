@@ -50,11 +50,11 @@ export async function fetchStocks(filters = {}) {
       const pbRatio = parseFloat(item["市净率"]);
       const sharpeRatio = parseFloat(item["夏普比率-普通收益率-日-一年定存利率"]);
 
-      if (!isNaN(annualReturn) && annualReturn < parseFloat(filters.annual_return || 0)) return false;
-      if (!isNaN(maxDrawdown) && maxDrawdown > parseFloat(filters.max_drawdown || 100)) return false;
-      if (!isNaN(peRatio) && peRatio > parseFloat(filters.pe_ratio || 100)) return false;
-      if (!isNaN(pbRatio) && pbRatio > parseFloat(filters.pb_ratio || 10)) return false;
-      if (!isNaN(sharpeRatio) && sharpeRatio < parseFloat(filters.sharpe_ratio || 0)) return false;
+      if (filters.annual_return !== undefined && !isNaN(annualReturn) && annualReturn < parseFloat(filters.annual_return)) return false;
+      if (filters.max_drawdown !== undefined && !isNaN(maxDrawdown) && maxDrawdown > parseFloat(filters.max_drawdown)) return false;
+      if (filters.pe_ratio !== undefined && !isNaN(peRatio) && peRatio > parseFloat(filters.pe_ratio)) return false;
+      if (filters.pb_ratio !== undefined && !isNaN(pbRatio) && pbRatio > parseFloat(filters.pb_ratio)) return false;
+      if (filters.sharpe_ratio !== undefined && !isNaN(sharpeRatio) && sharpeRatio < parseFloat(filters.sharpe_ratio)) return false;
       
       return true;
     });
