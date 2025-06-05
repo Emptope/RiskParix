@@ -9,13 +9,16 @@
 ## 整体架构
 
 - **script/** 数据处理
+
 - **desktop/** 桌面端
-  - **chat.py** ai 聊天板块
+  - **chat.py** AI 聊天板块
   - **detail.py** 个股展示面板
   - **home.py** 主面板
   - **strategy.py** 策略选择面板
+
 - **web/** 网页端
-  - **backend/** 后端 FastAPI
+
+  - **backend/** 后端（FastAPI）
     - **api/**
       - **chat.py** ai 聊天接口
       - **deepseek.py** 接入 deepseek api
@@ -23,7 +26,8 @@
       - **stocks.py** 个股详细数据 (details.parquet)
       - **users.py** 用户账本数据 (user_summary.parquet)
     - **app.py** 路由注册
-  - **frontend/** 前端 React + Vite
+
+  - **frontend/** 前端（React + Vite）
     - **src/**
       - **api/**
         - **api.js** 接口函数定义
@@ -35,20 +39,21 @@
         - **StockList.jsx** 个股列表
         - **TradingPanel.jsx** 交易面板
       - **context/**
-        - **ThemeContext.jsx** 浅色深色模式切换
+        - **ThemeContext.jsx** 浅色/深色模式切换
       - **pages/**
         - **Detail.jsx** 个股详情页
         - **Home.jsx** 主页
         - **Strategy.jsx** 策略选择页面
         - **Trade.jsx** 交易页面
-      - **App.jsx** 框架
+      - **App.jsx** 应用框架
       - **index.css** 全局 CSS
-      - **main.jsx** 框架
+      - **main.jsx** 程序入口
     - **index.html**
-    - **package.json** Nodejs 包配置文件
-    - **postcss.config.js** Postcss 配置文件
-    - **tailwind.config.js** Tailwindcss 配置文件
-    - **vite.config.js** vite 配置文件
+    - **package.json** Node.js 包配置文件
+    - **postcss.config.js** PostCSS 配置文件
+    - **tailwind.config.js** Tailwind CSS 配置文件
+    - **vite.config.js** Vite 配置
+
   - **start.bat** Windows 系统启动脚本
   - **start.sh** Shell 启动脚本
 
