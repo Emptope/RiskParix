@@ -58,7 +58,7 @@ export default function Trade() {
   const containerRef = useRef(null);
 
   const [klineData, setKlineData] = useState([]);
-  const [period, setPeriod] = useState("日K");
+  const [period, setPeriod] = useState("1天");
   const [currentPrice, setCurrentPrice] = useState(null);
 
   // 拖拽处理函数

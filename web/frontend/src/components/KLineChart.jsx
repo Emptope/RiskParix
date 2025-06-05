@@ -6,7 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 
 const KLineChart = ({ 
   data = [], 
-  period = "日K", 
+  period = "1天", 
   onPeriodChange,
   showPeriodSelector = true,
   height = "100%",
@@ -15,17 +15,31 @@ const KLineChart = ({
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const periods = ["日K", "周K", "月K", "季K", "年K"];
+  const periods = [
+    { label: "1天", value: "1天" },
+    { label: "5天", value: "5天" },
+    { label: "1个月", value: "1个月" },
+    { label: "3个月", value: "3个月" },
+    { label: "6个月", value: "6个月" },
+    { label: "1年", value: "1年" }
+  ];
 
-  // 数据重采样函数
-  const resampleKline = useMemo(() => {
-    if (period === "日K" || !data || data.length === 0) return data;
+   // 数据重采样函数
+   const resampleKline = useMemo(() => {
+    if (period === "1天" || !data || data.length === 0) return data;
+
+    // const availableKeys = ["5天", "1个月", "3个月", "6个月", "1年"];
+    // if (!availableKeys.includes(period)) {
+    //   console.warn(`[KLineChart] 无法识别的 period：“${period}”，可选值：${availableKeys.join("、")}`);
+    //   return data;
+    // }
 
     const formatMap = {
-      周K: (date) => dayjs(date).startOf("week").format("YYYY-MM-DD"),
-      月K: (date) => dayjs(date).startOf("month").format("YYYY-MM-DD"),
-      年K: (date) => dayjs(date).startOf("year").format("YYYY-MM-DD"),
-      季K: (date) => {
+      "1天": date => dayjs(date).format("YYYY-MM-DD"),
+      "5天": (date) => dayjs(date).startOf("week").format("YYYY-MM-DD"),
+      "1个月": (date) => dayjs(date).startOf("month").format("YYYY-MM-DD"),
+      "1年": (date) => dayjs(date).startOf("year").format("YYYY-MM-DD"),
+      "3个月": (date) => {
         const d = dayjs(date);
         const month = d.month();
         const startMonth = [0, 3, 6, 9][Math.floor(month / 3)];
@@ -33,9 +47,18 @@ const KLineChart = ({
           `${d.year()}-${(startMonth + 1).toString().padStart(2, "0")}-01`
         ).format("YYYY-MM-DD");
       },
+      "6个月": (date) => {
+        const d = dayjs(date);
+        const month = d.month();
+        const startMonth = month < 6 ? 0 : 6;
+        return dayjs(
+          `${d.year()}-${(startMonth + 1).toString().padStart(2, "0")}-01`
+        ).format("YYYY-MM-DD");
+      },
     };
 
     const grouped = groupBy(data, (item) => formatMap[period](item.date));
+   
     return Object.entries(grouped).map(([date, group]) => ({
       date,
       open: group[0].open,
@@ -131,6 +154,7 @@ const KLineChart = ({
       },
       yAxis: {
         scale: true,
+        position: "right",
         splitArea: { show: false },
         axisLine: {
           lineStyle: { color: isDark ? "#475569" : "#d1d5db", width: 1 },
@@ -222,53 +246,39 @@ const KLineChart = ({
     textSecondary: isDark ? "text-gray-300" : "text-gray-600",
     quaternary: isDark ? "bg-gray-700" : "bg-gray-50",
     border: isDark ? "border-gray-700" : "border-gray-200",
-    shadow: isDark ? "shadow-lg shadow-black/25" : "shadow-lg shadow-gray-400/25",
+    accentLight: isDark ? "bg-blue-900/30" : "bg-blue-50",
+    accentText: isDark ? "text-blue-400" : "text-blue-600",
   };
 
   return (
     <div className={`${colors.secondary} flex flex-col h-full ${className}`}>
       {showPeriodSelector && (
-        <div className={`${colors.borderStrong} border-b p-6 ${colors.secondary}`}>
+        <div className={`${colors.borderStrong} border-b p-4 ${colors.secondary}`}>
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <h2 className={`text-xl font-bold ${colors.textPrimary}`}>
-                K线图表
-              </h2>
-              <div className="flex items-center space-x-2">
-                <span className={`${colors.textSecondary} text-sm font-medium`}>
-                  周期:
-                </span>
-                <select
-                  value={period}
-                  onChange={(e) => onPeriodChange?.(e.target.value)}
-                  className={`${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all`}
+            <div className="flex items-center space-x-2">
+              {periods.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => onPeriodChange?.(p.value)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    period === p.value
+                      ? `${colors.accentLight} ${colors.accentText} border ${colors.borderStrong}`
+                      : `${colors.quaternary} ${colors.textSecondary} hover:${colors.textPrimary} border ${colors.border}`
+                  }`}
                 >
-                  {periods.map((p) => (
-                    <option
-                      key={p}
-                      value={p}
-                      className={`${colors.quaternary} ${colors.textPrimary}`}
-                    >
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       )}
       
-      <div className="flex-1 p-6">
-        <div
-          className={`h-full ${colors.border} border rounded-lg overflow-hidden ${colors.shadow}`}
-          style={{ height }}
-        >
-          <ReactECharts
-            option={chartOption}
-            style={{ height: "100%", width: "100%" }}
-          />
-        </div>
+      <div className="flex-1">
+        <ReactECharts
+          option={chartOption}
+          style={{ height: "100%", width: "100%" }}
+        />
       </div>
     </div>
   );

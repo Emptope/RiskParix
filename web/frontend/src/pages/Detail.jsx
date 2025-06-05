@@ -62,7 +62,7 @@ export default function Detail() {
   const [detail, setDetail] = useState(null);
   const [stockInfo, setStockInfo] = useState(null);
   const [klineData, setKlineData] = useState([]);
-  const [period, setPeriod] = useState("日K");
+  const [period, setPeriod] = useState("1天");
 
   // 拖拽处理函数
   const handleMouseDown = useCallback((divider) => {

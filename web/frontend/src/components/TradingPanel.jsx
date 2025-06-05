@@ -237,7 +237,6 @@ export default function TradingPanel({
             {quantity} {code} @ {orderType === 'market' ? 'MKT' : (price || currentPrice?.toFixed(2))} {orderType === 'market' ? '' : 'LMT'}
           </span>
         </button>
-
       </div>
     </div>
   )
