@@ -89,7 +89,7 @@ export default function TradingPanel({
         <div className="flex rounded-lg overflow-hidden">
           <button
             onClick={() => setTradeType("buy")}
-            className={`flex-1 py-3 px-4 font-medium transition-all ${
+            className={`flex-1 py-3 px-4 font-medium transition-all flex flex-col items-center ${
               tradeType === "buy"
                 ? "text-white"
                 : `${colors.quaternary} ${colors.textSecondary} hover:${colors.textPrimary}`
@@ -98,11 +98,16 @@ export default function TradingPanel({
               backgroundColor: tradeType === "buy" ? "#4285f4" : undefined
             }}
           >
-            买入
+            <span className="text-lg font-bold">买入</span>
+            {currentPrice && (
+              <span className="text-sm opacity-90">
+                {currentPrice.toFixed(2)}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setTradeType("sell")}
-            className={`flex-1 py-3 px-4 font-medium transition-all ${
+            className={`flex-1 py-3 px-4 font-medium transition-all flex flex-col items-center ${
               tradeType === "sell"
                 ? "text-white"
                 : `${colors.quaternary} ${colors.textSecondary} hover:${colors.textPrimary}`
@@ -111,7 +116,12 @@ export default function TradingPanel({
               backgroundColor: tradeType === "sell" ? "#ea4335" : undefined
             }}
           >
-            卖出
+            <span className="text-lg font-bold">卖出</span>
+            {currentPrice && (
+              <span className="text-sm opacity-90">
+                {currentPrice.toFixed(2)}
+              </span>
+            )}
           </button>
         </div>
 
@@ -168,6 +178,8 @@ export default function TradingPanel({
           </label>
           <input
             type="number"
+            step="100"
+            min="100"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             placeholder="输入数量"
@@ -189,9 +201,6 @@ export default function TradingPanel({
 
         {/* 快速数量选择 */}
         <div>
-          <label className={`block text-sm font-medium ${colors.textSecondary} mb-2`}>
-            快速选择
-          </label>
           <div className="grid grid-cols-4 gap-2">
             {[100, 500, 1000, 2000].map((amount) => (
               <button
@@ -209,7 +218,7 @@ export default function TradingPanel({
         <button
           onClick={handleSubmit}
           disabled={!quantity}
-          className={`w-full py-3 px-4 rounded-lg font-medium transition-all text-white ${
+          className={`w-full py-3 px-4 rounded-lg font-medium transition-all text-white text-center ${
             !quantity
               ? `cursor-not-allowed opacity-50`
               : ""
@@ -231,5 +240,5 @@ export default function TradingPanel({
 
       </div>
     </div>
-  );
+  )
 }
