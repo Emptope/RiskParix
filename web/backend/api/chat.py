@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Dict, Optional
 
 import re
+import json
 import duckdb
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -168,7 +169,8 @@ def _stream_response(
 
     def event_stream():
         for chunk in client.stream_chat(req.message, history):
-            yield f"data: {chunk}\n\n"
+            data = json.dumps({"content": chunk}, ensure_ascii=False)
+            yield f"data: {data}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

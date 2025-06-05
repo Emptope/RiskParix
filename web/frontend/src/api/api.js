@@ -233,7 +233,14 @@ export async function sendChatStream({ message, history = [], stock_id = null, e
             onComplete && onComplete();
             return;
           }
-          onChunk && onChunk(data);
+          try {
+            // 如果使用 JSON 格式
+            const parsed = JSON.parse(data);
+            onChunk && onChunk(parsed.content);
+          } catch (e) {
+            // 如果不是 JSON，直接使用原始数据
+            onChunk && onChunk(data);
+          }
         }
       }
       partial = lines[lines.length - 1];
