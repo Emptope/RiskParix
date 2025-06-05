@@ -20,8 +20,8 @@
 
   - **backend/** 后端（FastAPI）
     - **api/**
-      - **chat.py** ai 聊天接口
-      - **deepseek.py** 接入 deepseek api
+      - **chat.py** AI 聊天接口
+      - **deepseek.py** 接入 DeepSeek API
       - **kline.py** K 线数据 (all_klines.parquet)
       - **stocks.py** 个股详细数据 (details.parquet)
       - **users.py** 用户账本数据 (user_summary.parquet)
@@ -67,7 +67,7 @@
 
 - 数据存储优化：使用 Parquet 格式存储 K线与账本数据，节省空间，读取快速
 
-- TailwindCSS 快速样式开发：结合 PostCSS 与 Tailwind 配置，UI 开发灵活高效
+- TailwindCSS 快速样式开发：结合 PostCSS 与 Tailwind CSS 配置，UI 开发灵活高效
 
 ## 快速上手
 
