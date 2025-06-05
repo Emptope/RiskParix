@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { fetchStockDetail } from "../api/api";
 import { useTheme } from "../context/ThemeContext";
 import KLineChart from "../components/KLineChart";
+import TradingPanel from "../components/TradingPanel";
 
 export default function Trade() {
   const { code } = useParams();
@@ -58,12 +59,7 @@ export default function Trade() {
 
   const [klineData, setKlineData] = useState([]);
   const [period, setPeriod] = useState("日K");
-
-  // 交易相关状态
-  const [tradeType, setTradeType] = useState("buy"); // buy or sell
-  const [orderType, setOrderType] = useState("market"); // market or limit
-  const [quantity, setQuantity] = useState("");
-  const [price, setPrice] = useState("");
+  const [currentPrice, setCurrentPrice] = useState(null);
 
   // 拖拽处理函数
   const handleMouseDown = useCallback((divider) => {
@@ -119,9 +115,9 @@ export default function Trade() {
       .then((data) => {
         if (data?.kline_data) {
           setKlineData(data.kline_data);
-          // 设置当前价格为默认限价
+          // 设置当前价格
           if (data.kline_data.length > 0) {
-            setPrice(data.kline_data[data.kline_data.length - 1].close.toFixed(2));
+            setCurrentPrice(data.kline_data[data.kline_data.length - 1].close);
           }
         }
       })
@@ -131,23 +127,10 @@ export default function Trade() {
   }, [code]);
 
   // 处理交易提交
-  const handleTradeSubmit = () => {
-    if (!quantity || (orderType === "limit" && !price)) {
-      alert("请填写完整的交易信息");
-      return;
-    }
-
-    const tradeData = {
-      code,
-      type: tradeType,
-      orderType,
-      quantity: parseInt(quantity),
-      price: orderType === "limit" ? parseFloat(price) : null,
-    };
-
+  const handleTradeSubmit = (tradeData) => {
     console.log("提交交易:", tradeData);
     // 这里可以调用交易API
-    alert(`${tradeType === "buy" ? "买入" : "卖出"}订单已提交`);
+    alert(`${tradeData.type === "buy" ? "买入" : "卖出"}订单已提交`);
   };
 
   const middleWidth = 100 - rightWidth;
@@ -217,111 +200,12 @@ export default function Trade() {
         ></div>
 
         {/* 右侧交易面板 */}
-        <div 
-          style={{ width: `${rightWidth}%` }} 
-          className={`h-full ${colors.secondary} overflow-y-auto`}
-        >
-          <div className="p-6">
-            <h2 className={`text-xl font-bold ${colors.textPrimary} mb-6`}>
-              交易面板
-            </h2>
-            
-            {/* 买卖切换 */}
-            <div className="mb-6">
-              <div className="flex rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setTradeType("buy")}
-                  className={`flex-1 py-3 px-4 font-medium transition-all ${
-                    tradeType === "buy"
-                      ? "bg-emerald-600 text-white"
-                      : `${colors.quaternary} ${colors.textSecondary} hover:${colors.textPrimary}`
-                  }`}
-                >
-                  买入
-                </button>
-                <button
-                  onClick={() => setTradeType("sell")}
-                  className={`flex-1 py-3 px-4 font-medium transition-all ${
-                    tradeType === "sell"
-                      ? "bg-red-600 text-white"
-                      : `${colors.quaternary} ${colors.textSecondary} hover:${colors.textPrimary}`
-                  }`}
-                >
-                  卖出
-                </button>
-              </div>
-            </div>
-
-            {/* 订单类型 */}
-            <div className="mb-6">
-              <label className={`block text-sm font-medium ${colors.textSecondary} mb-2`}>
-                订单类型
-              </label>
-              <select
-                value={orderType}
-                onChange={(e) => setOrderType(e.target.value)}
-                className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-              >
-                <option value="market">市价单</option>
-                <option value="limit">限价单</option>
-              </select>
-            </div>
-
-            {/* 价格输入 */}
-            {orderType === "limit" && (
-              <div className="mb-6">
-                <label className={`block text-sm font-medium ${colors.textSecondary} mb-2`}>
-                  价格
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="输入价格"
-                  className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                />
-              </div>
-            )}
-
-            {/* 数量输入 */}
-            <div className="mb-6">
-              <label className={`block text-sm font-medium ${colors.textSecondary} mb-2`}>
-                数量（股）
-              </label>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="输入数量"
-                className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-              />
-            </div>
-
-            {/* 预估金额 */}
-            {quantity && price && (
-              <div className={`mb-6 p-4 ${colors.accentLight} rounded-lg`}>
-                <div className={`text-sm ${colors.textSecondary} mb-1`}>
-                  预估{tradeType === "buy" ? "买入" : "卖出"}金额
-                </div>
-                <div className={`text-lg font-bold ${colors.accentText}`}>
-                  ¥{(parseFloat(price) * parseInt(quantity || 0)).toLocaleString()}
-                </div>
-              </div>
-            )}
-
-            {/* 提交按钮 */}
-            <button
-              onClick={handleTradeSubmit}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-                tradeType === "buy"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  : "bg-red-600 hover:bg-red-700 text-white"
-              } ${colors.shadow}`}
-            >
-              {tradeType === "buy" ? "买入" : "卖出"} {code}
-            </button>
-          </div>
+        <div style={{ width: `${rightWidth}%` }}>
+          <TradingPanel
+            code={code}
+            currentPrice={currentPrice}
+            onTradeSubmit={handleTradeSubmit}
+          />
         </div>
       </div>
     </div>
