@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchStockDetail, fetchStockInfo } from "../api/api";
+import { fetchStockDetail } from "../api/api";
 import { useTheme } from "../context/ThemeContext";
-import AIChatAssistant from "../components/AIChatAssistant";
 import KLineChart from "../components/KLineChart";
-import StockInfo from "../components/StockInfo";
 
-export default function Detail() {
-  const { code, year } = useParams();
+export default function Trade() {
+  const { code } = useParams();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -54,15 +52,18 @@ export default function Detail() {
   };
 
   // 拖拽相关状态
-  const [leftWidth, setLeftWidth] = useState(25);
-  const [rightWidth, setRightWidth] = useState(25);
+  const [rightWidth, setRightWidth] = useState(30);
   const [isDragging, setIsDragging] = useState(null);
   const containerRef = useRef(null);
 
-  const [detail, setDetail] = useState(null);
-  const [stockInfo, setStockInfo] = useState(null);
   const [klineData, setKlineData] = useState([]);
   const [period, setPeriod] = useState("日K");
+
+  // 交易相关状态
+  const [tradeType, setTradeType] = useState("buy"); // buy or sell
+  const [orderType, setOrderType] = useState("market"); // market or limit
+  const [quantity, setQuantity] = useState("");
+  const [price, setPrice] = useState("");
 
   // 拖拽处理函数
   const handleMouseDown = useCallback((divider) => {
@@ -78,11 +79,8 @@ export default function Detail() {
       const mouseX = e.clientX - containerRect.left;
       const percentage = (mouseX / containerWidth) * 100;
 
-      if (isDragging === "left") {
-        const newLeftWidth = Math.max(15, Math.min(45, percentage));
-        setLeftWidth(newLeftWidth);
-      } else if (isDragging === "right") {
-        const newRightWidth = Math.max(15, Math.min(45, 100 - percentage));
+      if (isDragging === "right") {
+        const newRightWidth = Math.max(20, Math.min(50, 100 - percentage));
         setRightWidth(newRightWidth);
       }
     },
@@ -115,29 +113,44 @@ export default function Detail() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // 获取数据
+  // 获取K线数据
   useEffect(() => {
     fetchStockDetail(code)
       .then((data) => {
-        setDetail(data);
         if (data?.kline_data) {
           setKlineData(data.kline_data);
+          // 设置当前价格为默认限价
+          if (data.kline_data.length > 0) {
+            setPrice(data.kline_data[data.kline_data.length - 1].close.toFixed(2));
+          }
         }
       })
       .catch((err) => {
         console.error("获取股票详情失败:", err);
       });
+  }, [code]);
 
-    fetchStockInfo(code, year)
-      .then((info) => {
-        setStockInfo(info);
-      })
-      .catch((err) => {
-        console.error("获取股票信息失败:", err);
-      });
-  }, [code, year]);
+  // 处理交易提交
+  const handleTradeSubmit = () => {
+    if (!quantity || (orderType === "limit" && !price)) {
+      alert("请填写完整的交易信息");
+      return;
+    }
 
-  const middleWidth = 100 - leftWidth - rightWidth;
+    const tradeData = {
+      code,
+      type: tradeType,
+      orderType,
+      quantity: parseInt(quantity),
+      price: orderType === "limit" ? parseFloat(price) : null,
+    };
+
+    console.log("提交交易:", tradeData);
+    // 这里可以调用交易API
+    alert(`${tradeType === "buy" ? "买入" : "卖出"}订单已提交`);
+  };
+
+  const middleWidth = 100 - rightWidth;
 
   return (
     <div
@@ -170,46 +183,14 @@ export default function Detail() {
             </button>
             <div className={`h-6 w-px ${colors.borderStrong} bg-current`}></div>
             <h1 className={`text-xl font-bold ${colors.textPrimary}`}>
-              股票详情分析
+              股票交易 - {code}
             </h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate(`/trade/${code}`)}
-              className={`flex items-center space-x-2 ${colors.accent} ${colors.accentHover} text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 ${colors.shadow}`}
-            >
-              <span>交易</span>
-            </button>
           </div>
         </div>
       </div>
 
       <div ref={containerRef} className="flex flex-1 overflow-hidden">
-        {/* 左侧股票信息面板 */}
-        <div
-          className={`${colors.tertiary} overflow-y-auto transition-all duration-200`}
-          style={{ width: `${leftWidth}%` }}
-        >
-          <StockInfo
-            stockInfo={stockInfo}
-            klineData={klineData}
-            showPriceInfo={true}
-          />
-        </div>
-
-        {/* 左侧拖拽分隔条 */}
-        <div
-          className={`w-1 cursor-col-resize transition-all duration-200 ${
-            isDragging === "left"
-              ? "bg-blue-500"
-              : isDark
-              ? "bg-gray-700 hover:bg-blue-500"
-              : "bg-gray-300 hover:bg-blue-500"
-          }`}
-          onMouseDown={() => handleMouseDown("left")}
-        ></div>
-
-        {/* 中间图表区域 */}
+        {/* K线图区域 */}
         <div
           className="transition-all duration-200"
           style={{ width: `${middleWidth}%` }}
@@ -235,17 +216,112 @@ export default function Detail() {
           onMouseDown={() => handleMouseDown("right")}
         ></div>
 
-        {/* 右侧聊天助手 */}
-        <div style={{ width: `${rightWidth}%` }} className="h-full">
-          <AIChatAssistant
-            apiEndpoint="http://localhost:8000/api/chat/stock"
-            contextId={code}
-            initialMessage={`当前分析标的：${code}，请问有什么可以帮您？`}
-            placeholder="输入您的问题..."
-            title="AI 分析助手"
-            subtitle="DeepSeek 驱动"
-            className="h-full"
-          />
+        {/* 右侧交易面板 */}
+        <div 
+          style={{ width: `${rightWidth}%` }} 
+          className={`h-full ${colors.secondary} overflow-y-auto`}
+        >
+          <div className="p-6">
+            <h2 className={`text-xl font-bold ${colors.textPrimary} mb-6`}>
+              交易面板
+            </h2>
+            
+            {/* 买卖切换 */}
+            <div className="mb-6">
+              <div className="flex rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setTradeType("buy")}
+                  className={`flex-1 py-3 px-4 font-medium transition-all ${
+                    tradeType === "buy"
+                      ? "bg-emerald-600 text-white"
+                      : `${colors.quaternary} ${colors.textSecondary} hover:${colors.textPrimary}`
+                  }`}
+                >
+                  买入
+                </button>
+                <button
+                  onClick={() => setTradeType("sell")}
+                  className={`flex-1 py-3 px-4 font-medium transition-all ${
+                    tradeType === "sell"
+                      ? "bg-red-600 text-white"
+                      : `${colors.quaternary} ${colors.textSecondary} hover:${colors.textPrimary}`
+                  }`}
+                >
+                  卖出
+                </button>
+              </div>
+            </div>
+
+            {/* 订单类型 */}
+            <div className="mb-6">
+              <label className={`block text-sm font-medium ${colors.textSecondary} mb-2`}>
+                订单类型
+              </label>
+              <select
+                value={orderType}
+                onChange={(e) => setOrderType(e.target.value)}
+                className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+              >
+                <option value="market">市价单</option>
+                <option value="limit">限价单</option>
+              </select>
+            </div>
+
+            {/* 价格输入 */}
+            {orderType === "limit" && (
+              <div className="mb-6">
+                <label className={`block text-sm font-medium ${colors.textSecondary} mb-2`}>
+                  价格
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="输入价格"
+                  className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                />
+              </div>
+            )}
+
+            {/* 数量输入 */}
+            <div className="mb-6">
+              <label className={`block text-sm font-medium ${colors.textSecondary} mb-2`}>
+                数量（股）
+              </label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="输入数量"
+                className={`w-full ${colors.quaternary} ${colors.borderStrong} border ${colors.textPrimary} px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+              />
+            </div>
+
+            {/* 预估金额 */}
+            {quantity && price && (
+              <div className={`mb-6 p-4 ${colors.accentLight} rounded-lg`}>
+                <div className={`text-sm ${colors.textSecondary} mb-1`}>
+                  预估{tradeType === "buy" ? "买入" : "卖出"}金额
+                </div>
+                <div className={`text-lg font-bold ${colors.accentText}`}>
+                  ¥{(parseFloat(price) * parseInt(quantity || 0)).toLocaleString()}
+                </div>
+              </div>
+            )}
+
+            {/* 提交按钮 */}
+            <button
+              onClick={handleTradeSubmit}
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+                tradeType === "buy"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-red-600 hover:bg-red-700 text-white"
+              } ${colors.shadow}`}
+            >
+              {tradeType === "buy" ? "买入" : "卖出"} {code}
+            </button>
+          </div>
         </div>
       </div>
     </div>
