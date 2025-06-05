@@ -8,7 +8,7 @@
 
 ## 整体架构
 
-- **script/** 数据处理
+- **scripts/** 数据处理
 
 - **desktop/** 桌面端
   - **chat.py** AI 聊天板块
