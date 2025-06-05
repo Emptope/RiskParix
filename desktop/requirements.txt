@@ -3,3 +3,4 @@ numpy>=1.21.0
 matplotlib>=3.4.3
 mplfinance>=0.12.9b7
 requests>=2.26.0
+dotenv
