@@ -28,20 +28,22 @@
       - **api/**
         - **api.js** 接口函数定义
       - **components/**
-        - **NavBar.jsx** 导航栏
         - **AIChatAssistant.jsx** AI 聊天助手
         - **KLineChart.jsx** K 线图
+        - **NavBar.jsx** 导航栏
         - **StockInfo.jsx** 个股卡片
         - **StockList.jsx** 个股列表
+        - **TradingPanel.jsx** 交易面板
       - **context/**
         - **ThemeContext.jsx** 浅色深色模式切换
       - **pages/**
         - **Detail.jsx** 个股详情页
         - **Home.jsx** 主页
         - **Strategy.jsx** 策略选择页面
-      - **App.jsx** App 框架
+        - **Trade.jsx** 交易页面
+      - **App.jsx** 框架
       - **index.css** 全局 CSS
-      - **main.jsx** 全局框架
+      - **main.jsx** 框架
     - **index.html**
     - **package.json** Nodejs 包配置文件
     - **postcss.config.js** Postcss 配置文件
