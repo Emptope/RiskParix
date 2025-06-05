@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { sendChatStream } from '../api/api';
 
 export default function AIChatAssistant({
-  apiEndpoint,
+  endpoint = "stock",
   contextId,
   initialMessage,
   placeholder = "输入您的问题...",
@@ -94,7 +95,13 @@ export default function AIChatAssistant({
     setInputValue('');
     setIsLoading(true);
 
+    // 添加空的AI消息
+    setMessages(prev => [...prev, { role: 'ai', content: '' }]);
+    const aiMessageIndex = currentHistory.length;
+    let aiText = '';
+
     try {
+      // 准备聊天历史
       const trimmedHistory = currentHistory
         .filter(msg => msg.role === 'user' || msg.role === 'ai')
         .slice(-6)
@@ -103,52 +110,38 @@ export default function AIChatAssistant({
           content: msg.content,
         }));
 
-      const res = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: currentInputValue,
-          history: trimmedHistory.slice(0, -1),
-          stock_id: contextId,
-        }),
-      });
-
-      if (!res.ok || !res.body) throw new Error('连接失败');
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let partial = '';
-      let aiText = '';
-      
-      setMessages(prev => [...prev, { role: 'ai', content: '' }]);
-      const aiMessageIndex = currentHistory.length;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        partial += decoder.decode(value, { stream: true });
-        const lines = partial.split('\n\n');
-
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i];
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return;
+      // 使用新的流式API
+      await sendChatStream({
+        message: currentInputValue,
+        history: trimmedHistory.slice(0, -1),
+        stock_id: contextId,
+        endpoint: endpoint,
+        onChunk: (chunk) => {
+          aiText += chunk;
+          setMessages(prev => {
+            const updated = [...prev];
+            if (updated[aiMessageIndex] && updated[aiMessageIndex].role === 'ai') {
+              updated[aiMessageIndex].content = aiText;
             }
-            aiText += data;
-            setMessages(prev => {
-              const updated = [...prev];
-              if (updated[aiMessageIndex] && updated[aiMessageIndex].role === 'ai') {
-                updated[aiMessageIndex].content = aiText;
-              }
-              return updated;
-            });
-          }
+            return updated;
+          });
+        },
+        onError: (error) => {
+          setMessages(prev => {
+            const updated = [...prev];
+            const lastMessage = updated[updated.length - 1];
+            if (lastMessage && lastMessage.role === 'ai' && lastMessage.content === '') {
+              lastMessage.content = '发生错误: ' + error.message;
+            } else {
+              updated.push({ role: 'ai', content: '发生错误: ' + error.message });
+            }
+            return updated;
+          });
+        },
+        onComplete: () => {
+          // 流式传输完成
         }
-        partial = lines[lines.length - 1];
-      }
+      });
     } catch (err) {
       setMessages(prev => {
         const updated = [...prev];

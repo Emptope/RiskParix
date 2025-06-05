@@ -408,7 +408,7 @@ export default function Strategy() {
         {/* 右侧聊天助手 */}
         <div style={{ width: `${rightWidth}%` }} className="h-full">
           <AIChatAssistant
-            apiEndpoint="http://localhost:8000/api/chat/strategy"
+            endpoint="strategy"
             contextId={selectedUser}
             initialMessage={selectedUser ? `当前用户：${selectedUser}，请问您想分析什么？\n\n您可以尝试询问：\n- 这个用户使用的交易策略是什么？\n- 分析该用户的交易表现\n- 该用户的风险管理方式如何？\n- 有哪些策略优化建议？` : null}
             placeholder="向AI助手提问..."

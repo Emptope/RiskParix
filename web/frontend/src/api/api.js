@@ -183,6 +183,69 @@ export async function sendChat({ message, history = [], stock_id = null, endpoin
   }
 }
 
+/**
+ * 发送流式聊天消息
+ * @param {Object} params - 聊天参数
+ * @param {string} params.message - 消息内容
+ * @param {ChatMessage[]} params.history - 聊天历史
+ * @param {string|null} params.stock_id - 股票ID
+ * @param {string} params.endpoint - 聊天端点 ('stock' 或 'strategy')
+ * @param {function} params.onChunk - 接收数据块的回调函数
+ * @param {function} params.onError - 错误处理回调函数
+ * @param {function} params.onComplete - 完成时的回调函数
+ * @returns {Promise<void>}
+ */
+export async function sendChatStream({ message, history = [], stock_id = null, endpoint = "stock", onChunk, onError, onComplete }) {
+  try {
+    const validEndpoints = ["stock", "strategy"];
+    if (!validEndpoints.includes(endpoint)) {
+      throw new Error(`Invalid endpoint: ${endpoint}. Must be one of: ${validEndpoints.join(", ")}`);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/chat/${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message, history, stock_id })
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let partial = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      partial += decoder.decode(value, { stream: true });
+      const lines = partial.split('\n\n');
+
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i];
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            onComplete && onComplete();
+            return;
+          }
+          onChunk && onChunk(data);
+        }
+      }
+      partial = lines[lines.length - 1];
+    }
+    
+    onComplete && onComplete();
+  } catch (error) {
+    console.error('Stream chat error:', error);
+    onError && onError(error);
+  }
+}
+
 // TypeScript类型定义（JSDoc格式）
 /**
  * @typedef {Object} StockItem

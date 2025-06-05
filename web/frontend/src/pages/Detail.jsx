@@ -238,7 +238,7 @@ export default function Detail() {
         {/* 右侧聊天助手 */}
         <div style={{ width: `${rightWidth}%` }} className="h-full">
           <AIChatAssistant
-            apiEndpoint="http://localhost:8000/api/chat/stock"
+            endpoint="stock"
             contextId={code}
             initialMessage={`当前分析标的：${code}，请问有什么可以帮您？`}
             placeholder="输入您的问题..."
