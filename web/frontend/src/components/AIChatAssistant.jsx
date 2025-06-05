@@ -7,6 +7,7 @@ import { sendChatStream } from '../api/api';
 export default function AIChatAssistant({
   endpoint = "stock",
   contextId,
+  year,
   initialMessage,
   placeholder = "输入您的问题...",
   disabled = false,
@@ -110,11 +111,12 @@ export default function AIChatAssistant({
           content: msg.content,
         }));
 
-      // 使用新的流式API
+      // 使用流式API
       await sendChatStream({
         message: currentInputValue,
         history: trimmedHistory.slice(0, -1),
         stock_id: contextId,
+        year: year,
         endpoint: endpoint,
         onChunk: (chunk) => {
           aiText += chunk;

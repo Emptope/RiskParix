@@ -78,14 +78,17 @@ def _to_detail_code(kline_code: str) -> str:
 
 
 # ---------- 构造上下文 ----------
-def _build_stock_context(stock_id: str, kline_rows: int = 60) -> str:
+def _build_stock_context(stock_id: str, year: str = None, kline_rows: int = 60) -> str:
     try:
         detail_code = stock_id
         kline_code = _to_kline_code(stock_id)
 
+        year_filter = f"AND 年份 = '{year}'" if year else ""
+        
         details_df = _read_filter_df(
             DETAILS_PATH, detail_code,
-            key_candidates=["证券代码", "code", "股票代码", "stock_code"]
+            key_candidates=["证券代码", "code", "股票代码", "stock_code"],
+            extra_sql=year_filter
         )
         kline_df = _read_filter_df(
             KLINE_PATH, kline_code,
@@ -119,7 +122,6 @@ def _build_stock_context(stock_id: str, kline_rows: int = 60) -> str:
     except Exception as e:
         print(f"[chat._build_stock_context] 读取股票数据失败: {e}")
         return ""
-
 
 def _build_strategy_context(user_id: str, recent: int = 10) -> str:
     try:
@@ -158,6 +160,7 @@ class ChatRequest(BaseModel):
     message: str
     history: List[Dict] = []
     stock_id: Optional[str] = None  # 股票或用户 ID
+    year: Optional[str] = None  # 年份
 
 
 def _stream_response(
@@ -179,7 +182,7 @@ def _stream_response(
 # ---------- 路由 ----------
 @router.post("/chat/stock")
 async def chat_stock(req: ChatRequest):
-    sys_ctx = _build_stock_context(req.stock_id or "")
+    sys_ctx = _build_stock_context(req.stock_id or "", req.year)
     client = DeepSeekClient(stock_id=req.stock_id)
     return _stream_response(client, req, sys_ctx)
 

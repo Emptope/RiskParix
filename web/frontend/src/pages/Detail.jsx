@@ -240,7 +240,8 @@ export default function Detail() {
           <AIChatAssistant
             endpoint="stock"
             contextId={code}
-            initialMessage={`当前分析标的：${code}，请问有什么可以帮您？`}
+            year={year}
+            initialMessage={`当前分析标的：${code}（${year}年），请问有什么可以帮您？`}
             placeholder="输入您的问题..."
             title="AI 分析助手"
             subtitle="DeepSeek 驱动"

@@ -195,7 +195,7 @@ export async function sendChat({ message, history = [], stock_id = null, endpoin
  * @param {function} params.onComplete - 完成时的回调函数
  * @returns {Promise<void>}
  */
-export async function sendChatStream({ message, history = [], stock_id = null, endpoint = "stock", onChunk, onError, onComplete }) {
+export async function sendChatStream({ message, history = [], stock_id = null, year = null, endpoint = "stock", onChunk, onError, onComplete }) {
   try {
     const validEndpoints = ["stock", "strategy"];
     if (!validEndpoints.includes(endpoint)) {
@@ -207,7 +207,7 @@ export async function sendChatStream({ message, history = [], stock_id = null, e
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ message, history, stock_id })
+      body: JSON.stringify({ message, history, stock_id, year })
     });
 
     if (!response.ok || !response.body) {
